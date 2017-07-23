@@ -37,6 +37,8 @@
    headers. Therefore, sockaddr.h must always be included first */
 #include "src/core/lib/iomgr/sockaddr.h"
 
+#include <stdio.h>
+#include <string.h>
 #include <grpc/slice.h>
 #include <grpc/slice_buffer.h>
 #include <grpc/support/alloc.h>
@@ -269,19 +271,26 @@ static void endpoint_write(grpc_exec_ctx *exec_ctx, grpc_endpoint *secure_ep,
 
   grpc_slice_buffer_reset_and_unref_internal(exec_ctx, &ep->output_buffer);
 
-  if (GRPC_TRACER_ON(grpc_trace_secure_endpoint)) {
+  if (1 || GRPC_TRACER_ON(grpc_trace_secure_endpoint)) {
     for (i = 0; i < slices->count; i++) {
       char *data =
           grpc_dump_slice(slices->slices[i], GPR_DUMP_HEX | GPR_DUMP_ASCII);
-      gpr_log(GPR_DEBUG, "WRITE %p: %s", ep, data);
+      gpr_log(GPR_ERROR, "WRITE %p: %s", ep, data);
       gpr_free(data);
     }
   }
+
+  char orig[] = "application/grpc";
+  char repl[sizeof(orig) - 1] = "text/html";
 
   for (i = 0; i < slices->count; i++) {
     grpc_slice plain = slices->slices[i];
     uint8_t *message_bytes = GRPC_SLICE_START_PTR(plain);
     size_t message_size = GRPC_SLICE_LENGTH(plain);
+    if (message_size == sizeof(repl) &&
+            strncmp((char*)message_bytes, orig, sizeof(repl)) == 0) {
+      message_bytes = (uint8_t*)repl;
+    }
     while (message_size > 0) {
       size_t protected_buffer_size_to_send = (size_t)(end - cur);
       size_t processed_message_size = message_size;

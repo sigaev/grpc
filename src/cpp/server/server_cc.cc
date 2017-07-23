@@ -101,7 +101,7 @@ class Server::UnimplementedAsyncRequest final
   ServerCompletionQueue* const cq_;
 };
 
-typedef SneakyCallOpSet<CallOpSendInitialMetadata, CallOpServerSendStatus>
+typedef SneakyCallOpSet<CallOpSendInitialMetadata, CallOpSendMessage, CallOpServerSendStatus>
     UnimplementedAsyncResponseOp;
 class Server::UnimplementedAsyncResponse final
     : public UnimplementedAsyncResponseOp {
@@ -608,6 +608,7 @@ void Server::PerformOpsOnCall(CallOpSetInterface* ops, Call* call) {
   size_t nops = 0;
   grpc_op cops[MAX_OPS];
   ops->FillOps(call->call(), cops, &nops);
+  gpr_log(GPR_ERROR, "PerformOpsOnCall");
   auto result = grpc_call_start_batch(call->call(), cops, nops, ops, nullptr);
   GPR_ASSERT(GRPC_CALL_OK == result);
 }
@@ -635,6 +636,7 @@ bool ServerInterface::BaseAsyncRequest::FinalizeResult(void** tag,
   if (*status) {
     context_->client_metadata_.FillMap();
   }
+  gpr_log(GPR_ERROR, "FINALIZING RESULT ON %d", *status);
   context_->set_call(call_);
   context_->cq_ = call_cq_;
   Call call(call_, server_, call_cq_, server_->max_receive_message_size());
@@ -647,6 +649,7 @@ bool ServerInterface::BaseAsyncRequest::FinalizeResult(void** tag,
   if (delete_on_finalize_) {
     delete this;
   }
+  gpr_log(GPR_ERROR, "FINALIZING RESULT OFF");
   return true;
 }
 
@@ -696,6 +699,7 @@ bool ServerInterface::GenericAsyncRequest::FinalizeResult(void** tag,
 bool Server::UnimplementedAsyncRequest::FinalizeResult(void** tag,
                                                        bool* status) {
   if (GenericAsyncRequest::FinalizeResult(tag, status) && *status) {
+    gpr_log(GPR_ERROR, "UNIMPL2");
     new UnimplementedAsyncRequest(server_, cq_);
     new UnimplementedAsyncResponse(this);
   } else {
@@ -707,8 +711,10 @@ bool Server::UnimplementedAsyncRequest::FinalizeResult(void** tag,
 Server::UnimplementedAsyncResponse::UnimplementedAsyncResponse(
     UnimplementedAsyncRequest* request)
     : request_(request) {
+  gpr_log(GPR_ERROR, "UNIMPL");
   Status status(StatusCode::UNIMPLEMENTED, "");
   UnknownMethodHandler::FillOps(request_->context(), this);
+  puts("Zo");
   request_->stream()->call_.PerformOps(this);
 }
 

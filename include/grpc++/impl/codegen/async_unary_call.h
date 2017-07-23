@@ -225,6 +225,7 @@ class ServerAsyncResponseWriter final : public ServerAsyncStreamingInterface {
     } else {
       finish_buf_.ServerSendStatus(ctx_->trailing_metadata_, status);
     }
+    puts("Yo");
     call_.PerformOps(&finish_buf_);
   }
 
@@ -252,6 +253,7 @@ class ServerAsyncResponseWriter final : public ServerAsyncStreamingInterface {
       ctx_->sent_initial_metadata_ = true;
     }
     finish_buf_.ServerSendStatus(ctx_->trailing_metadata_, status);
+    puts("Muxosransx");
     call_.PerformOps(&finish_buf_);
   }
 

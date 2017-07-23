@@ -35,6 +35,7 @@
 #define GRPCXX_SUPPORT_BYTE_BUFFER_H
 
 #include <grpc++/impl/serialization_traits.h>
+#include <grpc++/impl/codegen/method_handler_impl.h>
 #include <grpc++/support/config.h>
 #include <grpc++/support/slice.h>
 #include <grpc++/support/status.h>
@@ -106,6 +107,21 @@ class SerializationTraits<ByteBuffer, void> {
     return Status::OK;
   }
 };
+
+inline void UnknownMethodHandler::FillOps(ServerContext* context, CallOpSet<CallOpSendInitialMetadata, CallOpSendMessage, CallOpServerSendStatus>* ops) {
+    Status status(StatusCode::UNIMPLEMENTED, "");
+    if (!context->sent_initial_metadata_) {
+      ops->SendInitialMetadata(context->initial_metadata_,
+                               context->initial_metadata_flags());
+      if (context->compression_level_set()) {
+        ops->set_compression_level(context->compression_level());
+      }
+      context->sent_initial_metadata_ = true;
+      Slice s(SliceFromCopiedString("<html><body>This <b>is</b> HTML.</body></html>"), Slice::STEAL_REF);
+      ops->SendMessage(ByteBuffer(&s, 1));
+    }
+    ops->ServerSendStatus(context->trailing_metadata_, Status::OK);
+  }
 
 }  // namespace grpc
 

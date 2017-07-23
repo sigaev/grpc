@@ -907,6 +907,7 @@ static void write_action_begin_locked(grpc_exec_ctx *exec_ctx, void *gt,
 
 static void write_action(grpc_exec_ctx *exec_ctx, void *gt, grpc_error *error) {
   grpc_chttp2_transport *t = gt;
+  gpr_log(GPR_ERROR, "write action");
   GPR_TIMER_BEGIN("write_action", 0);
   grpc_endpoint_write(
       exec_ctx, t->ep, &t->outbuf,
@@ -1233,7 +1234,7 @@ static void log_metadata(const grpc_metadata_batch *md_batch, uint32_t id,
        md = md->next) {
     char *key = grpc_slice_to_c_string(GRPC_MDKEY(md->md));
     char *value = grpc_slice_to_c_string(GRPC_MDVALUE(md->md));
-    gpr_log(GPR_INFO, "HTTP:%d:%s:%s: %s: %s", id, is_initial ? "HDR" : "TRL",
+    gpr_log(GPR_ERROR, "HTTP:%d:%s:%s: %s: %s", id, is_initial ? "HDR" : "TRL",
             is_client ? "CLI" : "SVR", key, value);
     gpr_free(key);
     gpr_free(value);
@@ -1969,6 +1970,7 @@ static void close_from_api(grpc_exec_ctx *exec_ctx, grpc_chttp2_transport *t,
   grpc_slice slice;
   grpc_error_get_status(error, s->deadline, &grpc_status, &slice, NULL);
 
+  gpr_log(GPR_ERROR, "close_from_api");
   GPR_ASSERT(grpc_status >= 0 && (int)grpc_status < 100);
 
   /* Hand roll a header block.

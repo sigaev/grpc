@@ -63,6 +63,7 @@ class RpcMethodHandler : public MethodHandler {
     CallOpSet<CallOpSendInitialMetadata, CallOpSendMessage,
               CallOpServerSendStatus>
         ops;
+    puts("Interesting");
     ops.SendInitialMetadata(param.server_context->initial_metadata_,
                             param.server_context->initial_metadata_flags());
     if (param.server_context->compression_level_set()) {
@@ -252,8 +253,8 @@ class SplitServerStreamingHandler
 /// Handle unknown method by returning UNIMPLEMENTED error.
 class UnknownMethodHandler : public MethodHandler {
  public:
-  template <class T>
-  static void FillOps(ServerContext* context, T* ops) {
+  static void FillOps(ServerContext* context, CallOpSet<CallOpSendInitialMetadata, CallOpSendMessage, CallOpServerSendStatus>* ops);
+  static void FillOps(ServerContext* context, CallOpSet<CallOpSendInitialMetadata, CallOpServerSendStatus>* ops) {
     Status status(StatusCode::UNIMPLEMENTED, "");
     if (!context->sent_initial_metadata_) {
       ops->SendInitialMetadata(context->initial_metadata_,
