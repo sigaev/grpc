@@ -21,3 +21,6 @@ for k in a b; do
         -in $k-csr.pem -out $k-cert.pem || exit 1
     rm -f $k-csr.pem
 done
+
+certutil -d sql:$HOME/.pki/nssdb -D -n 'root - NA'
+certutil -d sql:$HOME/.pki/nssdb -A -n 'root - NA' -t CT,c,c -i root-cert.pem
