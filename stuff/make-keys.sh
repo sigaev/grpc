@@ -2,10 +2,12 @@
 
 readonly N_DAYS=365
 readonly N_BITS=4096
+readonly KEYS_DIR=${0%make-keys.sh}keys
 
 set -x
 
-cd ${0%make-keys.sh}keys || exit 1
+mkdir -p "$KEYS_DIR"
+cd "$KEYS_DIR" || exit 1
 rm -f *.pem
 
 openssl req -new -newkey rsa:$N_BITS -nodes -days $N_DAYS -x509 \
