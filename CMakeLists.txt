@@ -3614,26 +3614,31 @@ add_executable(client2
 
 target_include_directories(helloworld
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/protobuf/src
   PRIVATE ${_gRPC_PROTO_GENS_DIR}
 )
 
 target_include_directories(server
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/protobuf/src
   PRIVATE ${_gRPC_PROTO_GENS_DIR}
 )
 
 target_include_directories(client0
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/protobuf/src
   PRIVATE ${_gRPC_PROTO_GENS_DIR}
 )
 
 target_include_directories(client1
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/protobuf/src
   PRIVATE ${_gRPC_PROTO_GENS_DIR}
 )
 
 target_include_directories(client2
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/protobuf/src
   PRIVATE ${_gRPC_PROTO_GENS_DIR}
 )
 
