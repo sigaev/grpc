@@ -3585,6 +3585,78 @@ if (gRPC_INSTALL)
   )
 endif()
 
+protobuf_generate_grpc_cpp(
+  stuff/helloworld.proto
+)
+
+add_library(helloworld
+  ${_gRPC_PROTO_GENS_DIR}/stuff/helloworld.pb.cc
+  ${_gRPC_PROTO_GENS_DIR}/stuff/helloworld.grpc.pb.cc
+  ${_gRPC_PROTO_GENS_DIR}/stuff/helloworld.pb.h
+  ${_gRPC_PROTO_GENS_DIR}/stuff/helloworld.grpc.pb.h
+)
+
+add_executable(server
+  stuff/server.cc
+)
+
+add_executable(client0
+  stuff/client0.cc
+)
+
+add_executable(client1
+  stuff/client1.cc
+)
+
+add_executable(client2
+  stuff/client2.cc
+)
+
+target_include_directories(helloworld
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE ${_gRPC_PROTO_GENS_DIR}
+)
+
+target_include_directories(server
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE ${_gRPC_PROTO_GENS_DIR}
+)
+
+target_include_directories(client0
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE ${_gRPC_PROTO_GENS_DIR}
+)
+
+target_include_directories(client1
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE ${_gRPC_PROTO_GENS_DIR}
+)
+
+target_include_directories(client2
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE ${_gRPC_PROTO_GENS_DIR}
+)
+
+target_link_libraries(server
+  grpc++
+  helloworld
+)
+
+target_link_libraries(client0
+  grpc++
+  helloworld
+)
+
+target_link_libraries(client1
+  grpc++
+  helloworld
+)
+
+target_link_libraries(client2
+  grpc++
+  helloworld
+)
+
 if (gRPC_BUILD_TESTS)
 
 add_library(http2_client_main
