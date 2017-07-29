@@ -24,9 +24,9 @@ class ServerImpl final {
 
     grpc::ServerBuilder builder;
     grpc::SslServerCredentialsOptions ssco;
-    ssco.pem_root_certs = ReadFile("keys/root-cert.pem");
-    ssco.pem_key_cert_pairs.push_back({ReadFile("keys/a-key.pem"),
-                                       ReadFile("keys/a-cert.pem")});
+    ssco.pem_root_certs = ReadFile("stuff/keys/root-cert.pem");
+    ssco.pem_key_cert_pairs.push_back({ReadFile("stuff/keys/a-key.pem"),
+                                       ReadFile("stuff/keys/a-cert.pem")});
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, grpc::SslServerCredentials(ssco));
     // Register "service_" as the instance through which we'll communicate with

@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
   // (use of InsecureChannelCredentials()).
   GreeterClient greeter(grpc::CreateChannel(
       "localhost:50051",
-      grpc::SslCredentials({stuff::ReadFile("keys/root-cert.pem"), "", ""})));
+      grpc::SslCredentials({stuff::ReadFile("stuff/keys/root-cert.pem"), "", ""})));
   std::string user("world");
   std::string reply = greeter.SayHello(user);
   std::cout << "Greeter received: " << reply << std::endl;
