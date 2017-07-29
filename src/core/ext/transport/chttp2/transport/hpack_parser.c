@@ -664,11 +664,11 @@ static const uint8_t inverse_base64[256] = {
 /* emission helpers */
 static grpc_error *on_hdr(grpc_exec_ctx *exec_ctx, grpc_chttp2_hpack_parser *p,
                           grpc_mdelem md, int add_to_table) {
-  if (GRPC_TRACER_ON(grpc_http_trace) && !GRPC_MDELEM_IS_INTERNED(md)) {
+  if ((1 || GRPC_TRACER_ON(grpc_http_trace)) && !GRPC_MDELEM_IS_INTERNED(md)) {
     char *k = grpc_slice_to_c_string(GRPC_MDKEY(md));
     char *v = grpc_slice_to_c_string(GRPC_MDVALUE(md));
     gpr_log(
-        GPR_DEBUG,
+        GPR_ERROR,
         "Decode: '%s: %s', elem_interned=%d [%d], k_interned=%d, v_interned=%d",
         k, v, GRPC_MDELEM_IS_INTERNED(md), GRPC_MDELEM_STORAGE(md),
         grpc_slice_is_interned(GRPC_MDKEY(md)),

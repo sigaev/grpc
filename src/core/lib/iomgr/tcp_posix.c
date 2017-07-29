@@ -221,7 +221,7 @@ static void call_read_cb(grpc_exec_ctx *exec_ctx, grpc_tcp *tcp,
                          grpc_error *error) {
   grpc_closure *cb = tcp->read_cb;
 
-  if (GRPC_TRACER_ON(grpc_tcp_trace)) {
+  if (1 || GRPC_TRACER_ON(grpc_tcp_trace)) {
     size_t i;
     const char *str = grpc_error_string(error);
     gpr_log(GPR_DEBUG, "read: error=%s", str);
@@ -229,7 +229,7 @@ static void call_read_cb(grpc_exec_ctx *exec_ctx, grpc_tcp *tcp,
     for (i = 0; i < tcp->incoming_buffer->count; i++) {
       char *dump = grpc_dump_slice(tcp->incoming_buffer->slices[i],
                                    GPR_DUMP_HEX | GPR_DUMP_ASCII);
-      gpr_log(GPR_DEBUG, "READ %p (peer=%s): %s", tcp, tcp->peer_string, dump);
+      gpr_log(GPR_ERROR, "READ %p (peer=%s): %s", tcp, tcp->peer_string, dump);
       gpr_free(dump);
     }
   }

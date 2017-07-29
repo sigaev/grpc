@@ -492,11 +492,11 @@ static void on_initial_header(grpc_exec_ctx *exec_ctx, void *tp,
 
   GPR_ASSERT(s != NULL);
 
-  if (GRPC_TRACER_ON(grpc_http_trace)) {
+  if (1 || GRPC_TRACER_ON(grpc_http_trace)) {
     char *key = grpc_slice_to_c_string(GRPC_MDKEY(md));
     char *value =
         grpc_dump_slice(GRPC_MDVALUE(md), GPR_DUMP_HEX | GPR_DUMP_ASCII);
-    gpr_log(GPR_INFO, "HTTP:%d:HDR:%s: %s: %s", s->id,
+    gpr_log(GPR_ERROR, "HTTP:%d:HDR:%s: %s: %s", s->id,
             t->is_client ? "CLI" : "SVR", key, value);
     gpr_free(key);
     gpr_free(value);
@@ -572,11 +572,11 @@ static void on_trailing_header(grpc_exec_ctx *exec_ctx, void *tp,
 
   GPR_ASSERT(s != NULL);
 
-  if (GRPC_TRACER_ON(grpc_http_trace)) {
+  if (1 || GRPC_TRACER_ON(grpc_http_trace)) {
     char *key = grpc_slice_to_c_string(GRPC_MDKEY(md));
     char *value =
         grpc_dump_slice(GRPC_MDVALUE(md), GPR_DUMP_HEX | GPR_DUMP_ASCII);
-    gpr_log(GPR_INFO, "HTTP:%d:TRL:%s: %s: %s", s->id,
+    gpr_log(GPR_ERROR, "HTTP:%d:TRL:%s: %s: %s", s->id,
             t->is_client ? "CLI" : "SVR", key, value);
     gpr_free(key);
     gpr_free(value);
