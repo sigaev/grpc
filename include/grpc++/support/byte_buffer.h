@@ -43,6 +43,7 @@
 #include <grpc/grpc.h>
 #include <grpc/support/log.h>
 
+#include <atomic>
 #include <vector>
 
 namespace grpc {
@@ -110,6 +111,7 @@ class SerializationTraits<ByteBuffer, void> {
 
 inline void UnknownMethodHandler::FillOps(ServerContext* context, CallOpSet<CallOpSendInitialMetadata, CallOpSendMessage, CallOpServerSendStatus>* ops) {
     Status status(StatusCode::UNIMPLEMENTED, "");
+    static std::atomic<int> count(0);
     if (!context->sent_initial_metadata_) {
       ops->SendInitialMetadata(context->initial_metadata_,
                                context->initial_metadata_flags());
@@ -117,8 +119,15 @@ inline void UnknownMethodHandler::FillOps(ServerContext* context, CallOpSet<Call
         ops->set_compression_level(context->compression_level());
       }
       context->sent_initial_metadata_ = true;
-      Slice s(SliceFromCopiedString("<html><body>This <b>is</b> HTML.</body></html>"), Slice::STEAL_REF);
-      ops->SendMessage(ByteBuffer(&s, 1));
+      char b[1024];
+      snprintf(b, sizeof(b),
+"<html><head><link rel=icon href=\"data:image/png;base64,"
+"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAA"
+"AABJRU5ErkJggg==\"></head>"
+"<body>This <b>is</b> HTML: %d. Server context: %p</body></html>",
+               count++, context);
+      Slice s(SliceFromCopiedString(b), Slice::STEAL_REF);
+      ops->SendMessage(ByteBuffer(&s, 1), WriteOptions().set_raw());
     }
     ops->ServerSendStatus(context->trailing_metadata_, Status::OK);
   }

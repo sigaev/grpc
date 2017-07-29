@@ -1367,15 +1367,17 @@ static void perform_stream_op_locked(grpc_exec_ctx *exec_ctx, void *stream_op,
           "fetching_send_message_finished");
     } else {
       GPR_ASSERT(s->fetching_send_message == NULL);
-      uint8_t *frame_hdr =
-          grpc_slice_buffer_tiny_add(&s->flow_controlled_buffer, 5);
       uint32_t flags = op_payload->send_message.send_message->flags;
-      frame_hdr[0] = (flags & GRPC_WRITE_INTERNAL_COMPRESS) != 0;
       size_t len = op_payload->send_message.send_message->length;
-      frame_hdr[1] = (uint8_t)(len >> 24);
-      frame_hdr[2] = (uint8_t)(len >> 16);
-      frame_hdr[3] = (uint8_t)(len >> 8);
-      frame_hdr[4] = (uint8_t)(len);
+      if (!(flags & GRPC_WRITE_RAW)) {
+        uint8_t *frame_hdr =
+            grpc_slice_buffer_tiny_add(&s->flow_controlled_buffer, 5);
+        frame_hdr[0] = (flags & GRPC_WRITE_INTERNAL_COMPRESS) != 0;
+        frame_hdr[1] = (uint8_t)(len >> 24);
+        frame_hdr[2] = (uint8_t)(len >> 16);
+        frame_hdr[3] = (uint8_t)(len >> 8);
+        frame_hdr[4] = (uint8_t)(len);
+      }
       s->fetching_send_message = op_payload->send_message.send_message;
       s->fetched_send_message_length = 0;
       s->next_message_end_offset = s->flow_controlled_bytes_written +

@@ -167,6 +167,11 @@ class WriteOptions {
 
   inline bool is_corked() const { return GetBit(GRPC_WRITE_BUFFER_HINT); }
 
+  WriteOptions& set_raw() {
+    SetBit(GRPC_WRITE_RAW);
+    return *this;
+  }
+
   /// last-message bit: indicates this is the last message in a stream
   /// client-side:  makes Write the equivalent of performing Write, WritesDone
   /// in a single step
