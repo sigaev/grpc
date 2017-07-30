@@ -63,7 +63,6 @@ class RpcMethodHandler : public MethodHandler {
     CallOpSet<CallOpSendInitialMetadata, CallOpSendMessage,
               CallOpServerSendStatus>
         ops;
-    puts("Interesting");
     ops.SendInitialMetadata(param.server_context->initial_metadata_,
                             param.server_context->initial_metadata_flags());
     if (param.server_context->compression_level_set()) {

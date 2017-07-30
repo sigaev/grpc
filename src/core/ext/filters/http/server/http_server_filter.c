@@ -81,7 +81,6 @@ static grpc_error *server_filter_outgoing_metadata(grpc_exec_ctx *exec_ctx,
                                                    grpc_call_element *elem,
                                                    grpc_metadata_batch *b) {
   if (b->idx.named.grpc_message != NULL) {
-    gpr_log(GPR_ERROR, "YES MESSAGE");
     grpc_slice pct_encoded_msg = grpc_percent_encode_slice(
         GRPC_MDVALUE(b->idx.named.grpc_message->md),
         grpc_compatible_percent_encoding_unreserved_bytes);
@@ -93,19 +92,11 @@ static grpc_error *server_filter_outgoing_metadata(grpc_exec_ctx *exec_ctx,
                                     pct_encoded_msg);
     }
   }
-  gpr_log(GPR_ERROR, "Payload: %p", b->idx.named.grpc_payload_bin);
-  gpr_log(GPR_ERROR, "Path: %p", b->idx.named.path);
-  gpr_log(GPR_ERROR, "Method: %p", b->idx.named.method);
-  gpr_log(GPR_ERROR, "Status: %p", b->idx.named.status);
-  gpr_log(GPR_ERROR, "Authority: %p", b->idx.named.authority);
-  gpr_log(GPR_ERROR, "TE: %p", b->idx.named.te);
-  gpr_log(GPR_ERROR, "Message: %p", b->idx.named.grpc_message);
   return GRPC_ERROR_NONE;
 }
 
 static void add_error(const char *error_name, grpc_error **cumulative,
                       grpc_error *new) {
-  gpr_log(GPR_ERROR, "Error: %s", error_name);
   if (new == GRPC_ERROR_NONE) return;
   if (*cumulative == GRPC_ERROR_NONE) {
     *cumulative = GRPC_ERROR_CREATE_FROM_COPIED_STRING(error_name);
@@ -120,23 +111,19 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
   grpc_error *error = GRPC_ERROR_NONE;
   static const char *error_name = "Failed processing incoming headers";
 
-  gpr_log(GPR_ERROR, "YO %d", 13);
   if (b->idx.named.method != NULL) {
     if (grpc_mdelem_eq(b->idx.named.method->md, GRPC_MDELEM_METHOD_POST)) {
-      gpr_log(GPR_ERROR, "YO %s", "POST");
       *calld->recv_initial_metadata_flags &=
           ~(GRPC_INITIAL_METADATA_CACHEABLE_REQUEST |
             GRPC_INITIAL_METADATA_IDEMPOTENT_REQUEST);
     } else if (grpc_mdelem_eq(b->idx.named.method->md,
                               GRPC_MDELEM_METHOD_PUT)) {
-      gpr_log(GPR_ERROR, "YO %s", "PUT");
       *calld->recv_initial_metadata_flags &=
           ~GRPC_INITIAL_METADATA_CACHEABLE_REQUEST;
       *calld->recv_initial_metadata_flags |=
           GRPC_INITIAL_METADATA_IDEMPOTENT_REQUEST;
     } else if (grpc_mdelem_eq(b->idx.named.method->md,
                               GRPC_MDELEM_METHOD_GET)) {
-      gpr_log(GPR_ERROR, "YO %s", "GET");
       *calld->recv_initial_metadata_flags |=
           GRPC_INITIAL_METADATA_CACHEABLE_REQUEST;
       *calld->recv_initial_metadata_flags &=
@@ -163,10 +150,8 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
                     GRPC_ERROR_CREATE_FROM_STATIC_STRING("Bad header"),
                     b->idx.named.te->md));
     }
-    gpr_log(GPR_ERROR, "YO %d", 15);
     grpc_metadata_batch_remove(exec_ctx, b, b->idx.named.te);
   } else {
-    gpr_log(GPR_ERROR, "YO %d", 16);
     if (0)
     add_error(error_name, &error,
               grpc_error_set_str(
@@ -178,16 +163,13 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
     if (!grpc_mdelem_eq(b->idx.named.scheme->md, GRPC_MDELEM_SCHEME_HTTP) &&
         !grpc_mdelem_eq(b->idx.named.scheme->md, GRPC_MDELEM_SCHEME_HTTPS) &&
         !grpc_mdelem_eq(b->idx.named.scheme->md, GRPC_MDELEM_SCHEME_GRPC)) {
-    gpr_log(GPR_ERROR, "YO %d", 17);
       add_error(error_name, &error,
                 grpc_attach_md_to_error(
                     GRPC_ERROR_CREATE_FROM_STATIC_STRING("Bad header"),
                     b->idx.named.scheme->md));
     }
-    gpr_log(GPR_ERROR, "YO %d", 18);
     grpc_metadata_batch_remove(exec_ctx, b, b->idx.named.scheme);
   } else {
-    gpr_log(GPR_ERROR, "YO %d", 19);
     add_error(
         error_name, &error,
         grpc_error_set_str(
@@ -196,7 +178,6 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
   }
 
   if (0 && b->idx.named.content_type != NULL) {
-    gpr_log(GPR_ERROR, "YO %d", 20);
     if (!grpc_mdelem_eq(b->idx.named.content_type->md,
                         GRPC_MDELEM_CONTENT_TYPE_APPLICATION_SLASH_GRPC)) {
       if (grpc_slice_buf_start_eq(GRPC_MDVALUE(b->idx.named.content_type->md),
@@ -218,7 +199,7 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
            see it without a proxy so log for now. */
         char *val = grpc_dump_slice(GRPC_MDVALUE(b->idx.named.content_type->md),
                                     GPR_DUMP_ASCII);
-        gpr_log(GPR_ERROR, "Unexpected content-type '%s'", val);
+        gpr_log(GPR_INFO, "Unexpected content-type '%s'", val);
         gpr_free(val);
       }
     }
@@ -232,19 +213,12 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
                   GRPC_ERROR_STR_KEY, grpc_slice_from_static_string(":path")));
   } else if (0 && (*calld->recv_initial_metadata_flags &
              GRPC_INITIAL_METADATA_CACHEABLE_REQUEST)) {
-    gpr_log(GPR_ERROR, "YO %d", 21);
     /* We have a cacheable request made with GET verb. The path contains the
      * query parameter which is base64 encoded request payload. */
     const char k_query_separator = '?';
     grpc_slice path_slice = GRPC_MDVALUE(b->idx.named.path->md);
     uint8_t *path_ptr = (uint8_t *)GRPC_SLICE_START_PTR(path_slice);
     size_t path_length = GRPC_SLICE_LENGTH(path_slice);
-    char x[2048];
-    size_t sz = path_length;
-    if (sz >= sizeof(x)) sz = sizeof(x) - 1;
-    memcpy(x, path_ptr, sz);
-    x[sz] = 0;
-    gpr_log(GPR_ERROR, "YOYO %s", x);
     /* offset of the character '?' */
     size_t offset = 0;
     for (offset = 0; offset < path_length && *path_ptr != k_query_separator;
@@ -278,7 +252,6 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
   }
 
   if (b->idx.named.host != NULL && b->idx.named.authority == NULL) {
-    gpr_log(GPR_ERROR, "Something authority");
     grpc_linked_mdelem *el = b->idx.named.host;
     grpc_mdelem md = GRPC_MDELEM_REF(el->md);
     grpc_metadata_batch_remove(exec_ctx, b, el);
@@ -312,7 +285,6 @@ static void hs_on_recv(grpc_exec_ctx *exec_ctx, void *user_data,
   } else {
     GRPC_ERROR_REF(err);
   }
-  gpr_log(GPR_ERROR, "hs_on_recv: %p", user_data);
   grpc_closure_run(exec_ctx, calld->on_done_recv, err);
 }
 
@@ -329,7 +301,6 @@ static void hs_on_complete(grpc_exec_ctx *exec_ctx, void *user_data,
     calld->recv_message_ready = NULL;
     calld->payload_bin_delivered = true;
   }
-  gpr_log(GPR_ERROR, "hs_on_complete: %p", user_data);
   grpc_closure_run(exec_ctx, calld->on_complete, GRPC_ERROR_REF(err));
 }
 
@@ -337,7 +308,6 @@ static void hs_recv_message_ready(grpc_exec_ctx *exec_ctx, void *user_data,
                                   grpc_error *err) {
   grpc_call_element *elem = user_data;
   call_data *calld = elem->call_data;
-  gpr_log(GPR_ERROR, "hs_recv_message_ready: %p", user_data);
   if (calld->seen_path_with_query) {
     /* do nothing. This is probably a GET request, and payload will be returned
     in hs_on_complete callback. */
@@ -351,7 +321,6 @@ static void hs_mutate_op(grpc_exec_ctx *exec_ctx, grpc_call_element *elem,
   /* grab pointers to our data from the call element */
   call_data *calld = elem->call_data;
 
-  gpr_log(GPR_ERROR, "hs_mutate_op");
   if (op->send_initial_metadata) {
     grpc_error *error = GRPC_ERROR_NONE;
     static const char *error_name = "Failed sending initial metadata";
@@ -377,7 +346,6 @@ static void hs_mutate_op(grpc_exec_ctx *exec_ctx, grpc_call_element *elem,
   }
 
   if (op->recv_initial_metadata) {
-    gpr_log(GPR_ERROR, "hs_mutate_op:recv_initial_metadata");
     /* substitute our callback for the higher callback */
     GPR_ASSERT(op->payload->recv_initial_metadata.recv_flags != NULL);
     calld->recv_initial_metadata =
@@ -391,7 +359,6 @@ static void hs_mutate_op(grpc_exec_ctx *exec_ctx, grpc_call_element *elem,
   }
 
   if (op->recv_message) {
-    gpr_log(GPR_ERROR, "hs_mutate_op:recv_message");
     calld->recv_message_ready = op->payload->recv_message.recv_message_ready;
     calld->pp_recv_message = op->payload->recv_message.recv_message;
     if (op->payload->recv_message.recv_message_ready) {
@@ -405,7 +372,6 @@ static void hs_mutate_op(grpc_exec_ctx *exec_ctx, grpc_call_element *elem,
   }
 
   if (op->send_trailing_metadata) {
-    gpr_log(GPR_ERROR, "hs_mutate_op:send_trailing_metadata %d", op->send_message);
     grpc_error *error = server_filter_outgoing_metadata(
         exec_ctx, elem,
         op->payload->send_trailing_metadata.send_trailing_metadata);
@@ -419,13 +385,11 @@ static void hs_mutate_op(grpc_exec_ctx *exec_ctx, grpc_call_element *elem,
 static void hs_start_transport_op(grpc_exec_ctx *exec_ctx,
                                   grpc_call_element *elem,
                                   grpc_transport_stream_op_batch *op) {
-  gpr_log(GPR_ERROR, "hs_start_transport_op ON");
-  GRPC_CALL_LOG_OP(GPR_ERROR, elem, op);
+  GRPC_CALL_LOG_OP(GPR_INFO, elem, op);
   GPR_TIMER_BEGIN("hs_start_transport_op", 0);
   hs_mutate_op(exec_ctx, elem, op);
   grpc_call_next_op(exec_ctx, elem, op);
   GPR_TIMER_END("hs_start_transport_op", 0);
-  gpr_log(GPR_ERROR, "hs_start_transport_op OFF");
 }
 
 /* Constructor for call_data */

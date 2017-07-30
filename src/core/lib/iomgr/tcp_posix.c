@@ -410,7 +410,6 @@ static bool tcp_flush(grpc_tcp *tcp, grpc_error **error) {
 
     GPR_TIMER_BEGIN("sendmsg", 1);
     do {
-      gpr_log(GPR_ERROR, "sendmsg");
       /* TODO(klempner): Cork if this is a partial write */
       sent_length = sendmsg(tcp->fd, &msg, SENDMSG_FLAGS);
     } while (sent_length < 0 && errno == EINTR);
@@ -491,13 +490,13 @@ static void tcp_write(grpc_exec_ctx *exec_ctx, grpc_endpoint *ep,
   grpc_tcp *tcp = (grpc_tcp *)ep;
   grpc_error *error = GRPC_ERROR_NONE;
 
-  if (1 || GRPC_TRACER_ON(grpc_tcp_trace)) {
+  if (GRPC_TRACER_ON(grpc_tcp_trace)) {
     size_t i;
 
     for (i = 0; i < buf->count; i++) {
       char *data =
           grpc_dump_slice(buf->slices[i], GPR_DUMP_HEX | GPR_DUMP_ASCII);
-      gpr_log(GPR_ERROR, "WRITE %p (peer=%s): %s", tcp, tcp->peer_string, data);
+      gpr_log(GPR_DEBUG, "WRITE %p (peer=%s): %s", tcp, tcp->peer_string, data);
       gpr_free(data);
     }
   }
