@@ -28,7 +28,10 @@ cc_binary(
 cc_binary(
     name = "client2",
     srcs = ["client2.cc"],
-    deps = [":helloworld"],
+    deps = [
+        ":helloworld",
+        ":utils",
+    ],
 )
 
 cc_binary(

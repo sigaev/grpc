@@ -58,7 +58,6 @@ class ServerImpl final {
 
     void Proceed() {
       if (status_ == CREATE) {
-        std::cout << "CREATE\n";
         // Make this instance progress to the PROCESS state.
         status_ = PROCESS;
 
@@ -70,7 +69,6 @@ class ServerImpl final {
         service_->RequestSayHello(&ctx_, &request_, &responder_, cq_, cq_,
                                   this);
       } else if (status_ == PROCESS) {
-        std::cout << "PROCESS\n";
         // Spawn a new CallData instance to serve new clients while we process
         // the one for this CallData. The instance will deallocate itself as
         // part of its FINISH state.
@@ -86,7 +84,6 @@ class ServerImpl final {
         status_ = FINISH;
         responder_.Finish(reply_, grpc::Status::OK, this);
       } else {
-        std::cout << "FINISH\n";
         GPR_ASSERT(status_ == FINISH);
         // Once in the FINISH state, deallocate ourselves (CallData).
         delete this;
