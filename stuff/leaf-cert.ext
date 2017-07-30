@@ -1,4 +1,4 @@
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid,issuer
 basicConstraints=CA:FALSE
-subjectAltName=DNS:localhost
+subjectAltName=DNS:localhost,DNS:other

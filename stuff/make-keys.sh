@@ -1,7 +1,7 @@
 #!/bin/bash
 
 readonly N_DAYS=365
-readonly N_BITS=4096
+readonly N_BITS=2048
 readonly KEYS_DIR=${0%make-keys.sh}keys
 
 set -x

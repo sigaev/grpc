@@ -24,7 +24,7 @@ using helloworld::HelloReply;
 using helloworld::Greeter;
 
 std::atomic<uint64_t> g_num_total(0);
-std::atomic<int> g_max_num_pending_(105);
+std::atomic<int> g_max_num_pending(105);
 
 class GreeterClient {
  public:
@@ -36,7 +36,7 @@ class GreeterClient {
     {
       std::unique_lock<std::mutex> ul(m_);
       while (num_pending_ >=
-             g_max_num_pending_.load(std::memory_order_relaxed)) {
+             g_max_num_pending.load(std::memory_order_relaxed)) {
         cv_.wait(ul);
       }
       ++num_pending_;
@@ -87,7 +87,7 @@ class GreeterClient {
       m_.lock();
       int num_pending = --num_pending_;
       m_.unlock();
-      if (num_pending < g_max_num_pending_.load(std::memory_order_relaxed)) {
+      if (num_pending < g_max_num_pending.load(std::memory_order_relaxed)) {
         cv_.notify_one();
       }
     }
