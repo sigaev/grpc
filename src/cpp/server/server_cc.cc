@@ -101,8 +101,9 @@ class Server::UnimplementedAsyncRequest final
   ServerCompletionQueue* const cq_;
 };
 
-typedef SneakyCallOpSet<CallOpSendInitialMetadata, CallOpSendMessage, CallOpServerSendStatus>
-    UnimplementedAsyncResponseOp;
+typedef SneakyCallOpSet<CallOpSendInitialMetadata,
+                        CallOpSendMessage,
+                        CallOpServerSendStatus> UnimplementedAsyncResponseOp;
 class Server::UnimplementedAsyncResponse final
     : public UnimplementedAsyncResponseOp {
  public:

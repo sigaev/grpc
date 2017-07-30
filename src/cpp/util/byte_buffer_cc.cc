@@ -33,6 +33,7 @@
 
 #include <grpc++/support/byte_buffer.h>
 #include <grpc++/generic/async_generic_service.h>
+#include <grpc++/impl/codegen/method_handler_impl.h>
 #include <grpc/byte_buffer_reader.h>
 
 #include <atomic>
@@ -111,7 +112,11 @@ void ByteBuffer::Swap(ByteBuffer* other) {
   buffer_ = tmp;
 }
 
-void UnknownMethodHandler::FillOps(ServerContext* context, CallOpSet<CallOpSendInitialMetadata, CallOpSendMessage, CallOpServerSendStatus>* ops) {
+void UnknownMethodHandler::FillOps(
+    ServerContext* context,
+    CallOpSet<CallOpSendInitialMetadata,
+              CallOpSendMessage,
+              CallOpServerSendStatus>* ops) {
   Status status(StatusCode::UNIMPLEMENTED, "");
   static std::atomic<int> count(0);
   if (!context->sent_initial_metadata_) {
@@ -127,7 +132,8 @@ void UnknownMethodHandler::FillOps(ServerContext* context, CallOpSet<CallOpSendI
 "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAA"
 "AABJRU5ErkJggg==\"></head>"
 "<body>This <b>is</b> HTML: %d. Method: %s</body></html>",
-             count++, static_cast<GenericServerContext*>(context)->method().c_str());
+             count++,
+             static_cast<GenericServerContext*>(context)->method().c_str());
     Slice s(SliceFromCopiedString(b), Slice::STEAL_REF);
     ops->SendMessage(ByteBuffer(&s, 1), WriteOptions().set_raw());
   }

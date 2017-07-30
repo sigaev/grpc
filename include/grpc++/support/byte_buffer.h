@@ -35,7 +35,6 @@
 #define GRPCXX_SUPPORT_BYTE_BUFFER_H
 
 #include <grpc++/impl/serialization_traits.h>
-#include <grpc++/impl/codegen/method_handler_impl.h>
 #include <grpc++/support/config.h>
 #include <grpc++/support/slice.h>
 #include <grpc++/support/status.h>
