@@ -272,6 +272,7 @@ static grpc_error *hc_mutate_op(grpc_exec_ctx *exec_ctx,
   channel_data *channeld = elem->channel_data;
   grpc_error *error;
 
+  gpr_log(GPR_ERROR, "CLIENT IS HERE");
   if (op->send_initial_metadata) {
     /* Decide which HTTP VERB to use. We use GET if the request is marked
     cacheable, and the operation contains both initial metadata and send

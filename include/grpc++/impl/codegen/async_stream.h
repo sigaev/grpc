@@ -614,6 +614,7 @@ class ServerAsyncReader final : public ServerAsyncReaderInterface<W, R> {
     } else {
       finish_ops_.ServerSendStatus(ctx_->trailing_metadata_, status);
     }
+    puts("WOW\n");
     call_.PerformOps(&finish_ops_);
   }
 

@@ -1080,6 +1080,7 @@ static batch_control *allocate_batch_control(grpc_call *call,
                                              const grpc_op *ops,
                                              size_t num_ops) {
   int slot = batch_slot_for_op(ops[0].op);
+  gpr_log(GPR_ERROR, "Batch slot: %d", slot);
   batch_control **pslot = &call->active_batches[slot];
   if (*pslot == NULL) {
     *pslot = gpr_arena_alloc(call->arena, sizeof(batch_control));
@@ -1471,6 +1472,7 @@ static grpc_call_error call_start_batch(grpc_exec_ctx *exec_ctx,
   stream_op->covered_by_poller = true;
 
   /* rewrite batch ops into a transport op */
+  gpr_log(GPR_ERROR, "#OPS: %ld", nops);
   for (i = 0; i < nops; i++) {
     op = &ops[i];
     if (op->reserved != NULL) {
@@ -1550,6 +1552,7 @@ static grpc_call_error call_start_batch(grpc_exec_ctx *exec_ctx,
           error = GRPC_CALL_ERROR_TOO_MANY_OPERATIONS;
           goto done_with_error;
         }
+        gpr_log(GPR_ERROR, "SENDING MESSAGE");
         stream_op->send_message = true;
         call->sending_message = true;
         grpc_slice_buffer_stream_init(
