@@ -284,6 +284,7 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
       gpr_log(GPR_ERROR, "GET request without QUERY");
     }
   }
+  gpr_log(GPR_ERROR, "path: %p", b->idx.named.path);
 
   if (b->idx.named.host != NULL && b->idx.named.authority == NULL) {
     gpr_log(GPR_ERROR, "Something authority");

@@ -148,6 +148,7 @@ class CompletionQueue : private GrpcLibraryCodegen {
   ///
   /// \return true if read a regular event, false if the queue is shutting down.
   bool Next(void** tag, bool* ok) {
+    puts("Next, yo");
     return (AsyncNextInternal(tag, ok, g_core_codegen_interface->gpr_inf_future(
                                            GPR_CLOCK_REALTIME)) != SHUTDOWN);
   }

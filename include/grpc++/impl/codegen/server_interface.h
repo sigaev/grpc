@@ -194,6 +194,7 @@ class ServerInterface : public CallHook {
     }
 
     bool FinalizeResult(void** tag, bool* status) override {
+      puts("YO?");
       bool serialization_status =
           *status && payload_ &&
           SerializationTraits<Message>::Deserialize(payload_, request_).ok();

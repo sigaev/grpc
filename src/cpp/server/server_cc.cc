@@ -274,6 +274,7 @@ class Server::SyncRequestThreadManager : public ThreadManager {
     gpr_timespec deadline =
         gpr_time_from_millis(cq_timeout_msec_, GPR_TIMESPAN);
 
+    puts("AsyncNext, yo");
     switch (server_cq_->AsyncNext(tag, ok, deadline)) {
       case CompletionQueue::TIMEOUT:
         return TIMEOUT;
@@ -743,7 +744,7 @@ bool ServerInterface::GenericAsyncRequest::FinalizeResult(void** tag,
 bool Server::UnimplementedAsyncRequest::FinalizeResult(void** tag,
                                                        bool* status) {
   if (GenericAsyncRequest::FinalizeResult(tag, status) && *status) {
-    gpr_log(GPR_ERROR, "UNIMPL2");
+    gpr_log(GPR_ERROR, "UNIMPL2 %s %p", static_cast<GenericServerContext*>(context_)->method_.c_str(), context_);
     new UnimplementedAsyncRequest(server_, cq_);
     new UnimplementedAsyncResponse(this);
   } else {
@@ -755,7 +756,7 @@ bool Server::UnimplementedAsyncRequest::FinalizeResult(void** tag,
 Server::UnimplementedAsyncResponse::UnimplementedAsyncResponse(
     UnimplementedAsyncRequest* request)
     : request_(request) {
-  gpr_log(GPR_ERROR, "UNIMPL");
+  gpr_log(GPR_ERROR, "UNIMPL %s", static_cast<GenericServerContext*>(request_->context())->method_.c_str());
   Status status(StatusCode::UNIMPLEMENTED, "");
   UnknownMethodHandler::FillOps(request_->context(), this);
   puts("Zo");

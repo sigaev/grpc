@@ -1250,9 +1250,9 @@ static void perform_stream_op_locked(grpc_exec_ctx *exec_ctx, void *stream_op,
   grpc_transport_stream_op_batch_payload *op_payload = op->payload;
   grpc_chttp2_transport *t = s->t;
 
-  if (GRPC_TRACER_ON(grpc_http_trace)) {
+  if (1 || GRPC_TRACER_ON(grpc_http_trace)) {
     char *str = grpc_transport_stream_op_batch_string(op);
-    gpr_log(GPR_DEBUG, "perform_stream_op_locked: %s; on_complete = %p", str,
+    gpr_log(GPR_ERROR, "perform_stream_op_locked: %s; on_complete = %p", str,
             op->on_complete);
     gpr_free(str);
     if (op->send_initial_metadata) {
@@ -1445,6 +1445,7 @@ static void perform_stream_op_locked(grpc_exec_ctx *exec_ctx, void *stream_op,
   }
 
   if (op->recv_initial_metadata) {
+  gpr_log(GPR_ERROR, "hmm #1");
     GPR_ASSERT(s->recv_initial_metadata_ready == NULL);
     s->recv_initial_metadata_ready =
         op_payload->recv_initial_metadata.recv_initial_metadata_ready;
@@ -1454,6 +1455,7 @@ static void perform_stream_op_locked(grpc_exec_ctx *exec_ctx, void *stream_op,
   }
 
   if (op->recv_message) {
+  gpr_log(GPR_ERROR, "hmm #2");
     size_t already_received;
     GPR_ASSERT(s->recv_message_ready == NULL);
     GPR_ASSERT(!s->pending_byte_stream);
@@ -1473,6 +1475,7 @@ static void perform_stream_op_locked(grpc_exec_ctx *exec_ctx, void *stream_op,
   }
 
   if (op->recv_trailing_metadata) {
+  gpr_log(GPR_ERROR, "hmm #3");
     GPR_ASSERT(s->recv_trailing_metadata_finished == NULL);
     s->recv_trailing_metadata_finished = add_closure_barrier(on_complete);
     s->recv_trailing_metadata =
@@ -1480,10 +1483,12 @@ static void perform_stream_op_locked(grpc_exec_ctx *exec_ctx, void *stream_op,
     s->final_metadata_requested = true;
     grpc_chttp2_maybe_complete_recv_trailing_metadata(exec_ctx, t, s);
   }
+  gpr_log(GPR_ERROR, "hmm all");
 
   grpc_chttp2_complete_closure_step(exec_ctx, t, s, &on_complete,
                                     GRPC_ERROR_NONE, "op->on_complete");
 
+  gpr_log(GPR_ERROR, "hmm all, really");
   GPR_TIMER_END("perform_stream_op_locked", 0);
   GRPC_CHTTP2_STREAM_UNREF(exec_ctx, s, "perform_stream_op");
 }
@@ -1495,9 +1500,9 @@ static void perform_stream_op(grpc_exec_ctx *exec_ctx, grpc_transport *gt,
   grpc_chttp2_transport *t = (grpc_chttp2_transport *)gt;
   grpc_chttp2_stream *s = (grpc_chttp2_stream *)gs;
 
-  if (GRPC_TRACER_ON(grpc_http_trace)) {
+  if (1 || GRPC_TRACER_ON(grpc_http_trace)) {
     char *str = grpc_transport_stream_op_batch_string(op);
-    gpr_log(GPR_DEBUG, "perform_stream_op[s=%p]: %s", s, str);
+    gpr_log(GPR_ERROR, "perform_stream_op[s=%p]: %s", s, str);
     gpr_free(str);
   }
 
@@ -1510,6 +1515,7 @@ static void perform_stream_op(grpc_exec_ctx *exec_ctx, grpc_transport *gt,
           grpc_combiner_scheduler(t->combiner, op->covered_by_poller)),
       GRPC_ERROR_NONE);
   GPR_TIMER_END("perform_stream_op", 0);
+  gpr_log(GPR_ERROR, "End of all");
 }
 
 static void cancel_pings(grpc_exec_ctx *exec_ctx, grpc_chttp2_transport *t,
@@ -1655,6 +1661,7 @@ static void perform_transport_op(grpc_exec_ctx *exec_ctx, grpc_transport *gt,
 void grpc_chttp2_maybe_complete_recv_initial_metadata(grpc_exec_ctx *exec_ctx,
                                                       grpc_chttp2_transport *t,
                                                       grpc_chttp2_stream *s) {
+  gpr_log(GPR_ERROR, "maybe_complete_recv_initial_metadata");
   if (s->recv_initial_metadata_ready != NULL &&
       s->published_metadata[0] != GRPC_METADATA_NOT_PUBLISHED) {
     if (s->seen_error) {
@@ -1719,6 +1726,7 @@ void grpc_chttp2_maybe_complete_recv_message(grpc_exec_ctx *exec_ctx,
 void grpc_chttp2_maybe_complete_recv_trailing_metadata(grpc_exec_ctx *exec_ctx,
                                                        grpc_chttp2_transport *t,
                                                        grpc_chttp2_stream *s) {
+  gpr_log(GPR_ERROR, "This is probably it");
   grpc_chttp2_maybe_complete_recv_message(exec_ctx, t, s);
   if (s->recv_trailing_metadata_finished != NULL && s->read_closed &&
       s->write_closed) {

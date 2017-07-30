@@ -1126,8 +1126,12 @@ static grpc_error *consolidate_batch_errors(batch_control *bctl) {
 
 static void post_batch_completion(grpc_exec_ctx *exec_ctx,
                                   batch_control *bctl) {
+  if (bctl->call->metadata_batch[1][0].idx.named.path) gpr_log(GPR_ERROR, "huh");
+  gpr_log(GPR_ERROR, "post_batch_completion");
   grpc_call *next_child_call;
   grpc_call *call = bctl->call;
+  grpc_call_element *elem = CALL_ELEM_FROM_CALL(call, 0);
+  gpr_log(GPR_ERROR, "call_data: %p", elem->call_data);
   grpc_error *error = consolidate_batch_errors(bctl);
 
   if (bctl->op.send_initial_metadata) {
@@ -1213,6 +1217,7 @@ static void continue_receiving_slices(grpc_exec_ctx *exec_ctx,
       call->receiving_message = 0;
       grpc_byte_stream_destroy(exec_ctx, call->receiving_stream);
       call->receiving_stream = NULL;
+        gpr_log(GPR_ERROR, "yok0");
       finish_batch_step(exec_ctx, bctl);
       return;
     }
@@ -1221,9 +1226,11 @@ static void continue_receiving_slices(grpc_exec_ctx *exec_ctx,
       error = grpc_byte_stream_pull(exec_ctx, call->receiving_stream,
                                     &call->receiving_slice);
       if (error == GRPC_ERROR_NONE) {
+        gpr_log(GPR_ERROR, "yok1");
         grpc_slice_buffer_add(&(*call->receiving_buffer)->data.raw.slice_buffer,
                               call->receiving_slice);
       } else {
+        gpr_log(GPR_ERROR, "yok2");
         grpc_byte_stream_destroy(exec_ctx, call->receiving_stream);
         call->receiving_stream = NULL;
         grpc_byte_buffer_destroy(*call->receiving_buffer);
@@ -1268,6 +1275,7 @@ static void receiving_slice_ready(grpc_exec_ctx *exec_ctx, void *bctlp,
     grpc_byte_buffer_destroy(*call->receiving_buffer);
     *call->receiving_buffer = NULL;
     call->receiving_message = 0;
+    gpr_log(GPR_ERROR, "yok5");
     finish_batch_step(exec_ctx, bctl);
     if (release_error) {
       GRPC_ERROR_UNREF(error);
@@ -1281,6 +1289,7 @@ static void process_data_after_md(grpc_exec_ctx *exec_ctx,
   if (call->receiving_stream == NULL) {
     *call->receiving_buffer = NULL;
     call->receiving_message = 0;
+    gpr_log(GPR_ERROR, "yok6");
     finish_batch_step(exec_ctx, bctl);
   } else {
     call->test_only_last_message_flags = call->receiving_stream->flags;
@@ -1386,7 +1395,9 @@ static void receiving_initial_metadata_ready(grpc_exec_ctx *exec_ctx,
   grpc_call *call = bctl->call;
 
   add_batch_error(exec_ctx, bctl, GRPC_ERROR_REF(error), false);
+    gpr_log(GPR_ERROR, "MAYBE ERROR");
   if (error == GRPC_ERROR_NONE) {
+    gpr_log(GPR_ERROR, "no ERROR");
     grpc_metadata_batch *md =
         &call->metadata_batch[1 /* is_receiving */][0 /* is_trailing */];
     recv_initial_filter(exec_ctx, call, md);
@@ -1413,6 +1424,7 @@ static void receiving_initial_metadata_ready(grpc_exec_ctx *exec_ctx,
     grpc_closure_run(exec_ctx, saved_rsr_closure, GRPC_ERROR_REF(error));
   }
 
+    gpr_log(GPR_ERROR, "yok18");
   finish_batch_step(exec_ctx, bctl);
 }
 
@@ -1421,6 +1433,7 @@ static void finish_batch(grpc_exec_ctx *exec_ctx, void *bctlp,
   batch_control *bctl = bctlp;
 
   add_batch_error(exec_ctx, bctl, GRPC_ERROR_REF(error), false);
+    gpr_log(GPR_ERROR, "yok8");
   finish_batch_step(exec_ctx, bctl);
 }
 

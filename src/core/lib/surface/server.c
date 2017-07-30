@@ -467,6 +467,8 @@ static void destroy_channel(grpc_exec_ctx *exec_ctx, channel_data *chand,
 
 static void done_request_event(grpc_exec_ctx *exec_ctx, void *req,
                                grpc_cq_completion *c) {
+  requested_call *rc = req;
+  gpr_log(GPR_ERROR, "freeing %p; tag=%p", rc, rc->tag);
   gpr_free(req);
 }
 
@@ -479,6 +481,7 @@ static void publish_call(grpc_exec_ctx *exec_ctx, grpc_server *server,
   GPR_SWAP(grpc_metadata_array, *rc->initial_metadata, calld->initial_metadata);
   switch (rc->type) {
     case BATCH_CALL:
+      gpr_log(GPR_ERROR, "BATCH_CALL, rc=%p, use rc->data.batch.details->method", rc);
       GPR_ASSERT(calld->host_set);
       GPR_ASSERT(calld->path_set);
       rc->data.batch.details->host = grpc_slice_ref_internal(calld->host);
@@ -487,6 +490,7 @@ static void publish_call(grpc_exec_ctx *exec_ctx, grpc_server *server,
       rc->data.batch.details->flags = calld->recv_initial_metadata_flags;
       break;
     case REGISTERED_CALL:
+      gpr_log(GPR_ERROR, "REGISTERED_CALL");
       *rc->data.registered.deadline = calld->deadline;
       if (rc->data.registered.optional_payload) {
         *rc->data.registered.optional_payload = calld->payload;
@@ -520,7 +524,7 @@ static void publish_new_rpc(grpc_exec_ctx *exec_ctx, void *arg,
                        GRPC_ERROR_REF(error));
     return;
   }
-
+  gpr_log(GPR_ERROR, "Warm");
   for (size_t i = 0; i < server->cq_count; i++) {
     size_t cq_idx = (chand->cq_idx + i) % server->cq_count;
     requested_call *rc =
@@ -531,6 +535,7 @@ static void publish_new_rpc(grpc_exec_ctx *exec_ctx, void *arg,
       gpr_mu_lock(&calld->mu_state);
       calld->state = ACTIVATED;
       gpr_mu_unlock(&calld->mu_state);
+  gpr_log(GPR_ERROR, "Warm #2");
       publish_call(exec_ctx, server, calld, cq_idx, rc);
       return; /* early out */
     }
@@ -568,12 +573,15 @@ static void finish_start_new_rpc(
   }
 
   calld->request_matcher = rm;
+  gpr_log(GPR_ERROR, "Hello some more");
 
   switch (payload_handling) {
     case GRPC_SRM_PAYLOAD_NONE:
+  gpr_log(GPR_ERROR, "Hello some more #2");
       publish_new_rpc(exec_ctx, elem, GRPC_ERROR_NONE);
       break;
     case GRPC_SRM_PAYLOAD_READ_INITIAL_BYTE_BUFFER: {
+  gpr_log(GPR_ERROR, "Hello some more #3");
       grpc_op op;
       memset(&op, 0, sizeof(op));
       op.op = GRPC_OP_RECV_MESSAGE;
@@ -598,6 +606,7 @@ static void start_new_rpc(grpc_exec_ctx *exec_ctx, grpc_call_element *elem) {
   if (chand->registered_methods && calld->path_set && calld->host_set) {
     /* TODO(ctiller): unify these two searches */
     /* check for an exact match with host */
+    gpr_log(GPR_ERROR, "hello there");
     hash = GRPC_MDSTR_KV_HASH(grpc_slice_hash(calld->host),
                               grpc_slice_hash(calld->path));
     for (i = 0; i <= chand->registered_method_max_probes; i++) {
@@ -727,6 +736,8 @@ static void server_on_recv_initial_metadata(grpc_exec_ctx *exec_ctx, void *ptr,
 
   if (error == GRPC_ERROR_NONE) {
     GPR_ASSERT(calld->recv_initial_metadata->idx.named.path != NULL);
+    gpr_log(GPR_ERROR, "call data: %p", calld);
+    gpr_log(GPR_ERROR, "path: %p", calld->recv_initial_metadata->idx.named.path);
     GPR_ASSERT(calld->recv_initial_metadata->idx.named.authority != NULL);
     calld->path = grpc_slice_ref_internal(
         GRPC_MDVALUE(calld->recv_initial_metadata->idx.named.path->md));
@@ -739,6 +750,7 @@ static void server_on_recv_initial_metadata(grpc_exec_ctx *exec_ctx, void *ptr,
     grpc_metadata_batch_remove(
         exec_ctx, calld->recv_initial_metadata,
         calld->recv_initial_metadata->idx.named.authority);
+    gpr_log(GPR_ERROR, "path: %p", calld->recv_initial_metadata->idx.named.path);
   } else {
     GRPC_ERROR_REF(error);
   }
@@ -788,6 +800,7 @@ static void got_initial_metadata(grpc_exec_ctx *exec_ctx, void *ptr,
   grpc_call_element *elem = ptr;
   call_data *calld = elem->call_data;
   if (error == GRPC_ERROR_NONE) {
+    gpr_log(GPR_ERROR, "starting new RPC");
     start_new_rpc(exec_ctx, elem);
   } else {
     gpr_mu_lock(&calld->mu_state);
@@ -1481,6 +1494,7 @@ static void fail_call(grpc_exec_ctx *exec_ctx, grpc_server *server,
   rc->initial_metadata->count = 0;
   GPR_ASSERT(error != GRPC_ERROR_NONE);
 
+  gpr_log(GPR_ERROR, "fail call");
   grpc_cq_end_op(exec_ctx, server->cqs[cq_idx], rc->tag, error,
                  done_request_event, rc, &rc->completion);
 }

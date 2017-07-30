@@ -76,11 +76,14 @@ CompletionQueue::NextStatus CompletionQueue::AsyncNextInternal(
         return SHUTDOWN;
       case GRPC_OP_COMPLETE:
         auto cq_tag = static_cast<CompletionQueueTag*>(ev.tag);
+        printf("%s is at %p\n", typeid(*cq_tag).name(), cq_tag);
         *ok = ev.success != 0;
         *tag = cq_tag;
+        puts("OY1");
         if (cq_tag->FinalizeResult(tag, ok)) {
+          puts("OY2");
           return GOT_EVENT;
-        }
+        } else {puts("OY3");}
         break;
     }
   }

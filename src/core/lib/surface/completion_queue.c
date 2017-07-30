@@ -579,6 +579,7 @@ static void cq_end_op_for_next(grpc_exec_ctx *exec_ctx,
   cq_check_tag(cc, tag, true); /* Used in debug builds only */
 
   /* Add the completion to the queue */
+  gpr_log(GPR_ERROR, "PUSH");
   cq_event_queue_push(&cqd->queue, storage);
   gpr_atm_no_barrier_fetch_add(&cqd->things_queued_ever, 1);
 
@@ -752,6 +753,7 @@ static grpc_event cq_next(grpc_completion_queue *cc, gpr_timespec deadline,
   gpr_timespec now;
   cq_data *cqd = &cc->data;
 
+  gpr_log(GPR_ERROR, "cq_next");
   GPR_TIMER_BEGIN("grpc_completion_queue_next", 0);
 
   GRPC_API_TRACE(
@@ -790,6 +792,7 @@ static grpc_event cq_next(grpc_completion_queue *cc, gpr_timespec deadline,
       ret.type = GRPC_OP_COMPLETE;
       ret.success = c->next & 1u;
       ret.tag = c->tag;
+      gpr_log(GPR_ERROR, "tag #1");
       c->done(&exec_ctx, c->done_arg, c);
       break;
     }
@@ -800,6 +803,7 @@ static grpc_event cq_next(grpc_completion_queue *cc, gpr_timespec deadline,
       ret.type = GRPC_OP_COMPLETE;
       ret.success = c->next & 1u;
       ret.tag = c->tag;
+      gpr_log(GPR_ERROR, "tag #2");
       c->done(&exec_ctx, c->done_arg, c);
       break;
     } else {
@@ -865,6 +869,7 @@ static grpc_event cq_next(grpc_completion_queue *cc, gpr_timespec deadline,
 
   GPR_TIMER_END("grpc_completion_queue_next", 0);
 
+  gpr_log(GPR_ERROR, "cq_next END");
   return ret;
 }
 
