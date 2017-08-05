@@ -1,6 +1,7 @@
-#include <iostream>
+#include <chrono>
 #include <memory>
 #include <string>
+#include <thread>
 
 #include <grpc++/grpc++.h>
 #include <grpc/support/log.h>
@@ -13,9 +14,8 @@ namespace stuff {
 class ServerImpl final {
  public:
   ~ServerImpl() {
-    server_->Shutdown();
-    // Always shutdown the completion queue after the server.
-    cq_->Shutdown();
+    gpr_log(GPR_ERROR, "Server shutting down");
+    shutdown_thread_.join();
   }
 
   // There is no shutdown handling in this code.
@@ -37,8 +37,13 @@ class ServerImpl final {
     cq_ = builder.AddCompletionQueue();
     // Finally assemble the server.
     server_ = builder.BuildAndStart();
-    std::cout << "Server listening on " << server_address << std::endl;
+    gpr_log(GPR_ERROR, "Server listening on %s", server_address.c_str());
 
+    shutdown_thread_ = std::thread([this] {
+      std::this_thread::sleep_for(std::chrono::seconds(60));
+      server_->Shutdown();
+      cq_->Shutdown();
+    });
     // Proceed to the server's main loop.
     HandleRpcs();
   }
@@ -124,13 +129,12 @@ class ServerImpl final {
     new CallData(&service_, cq_.get());
     void* tag;  // uniquely identifies a request.
     bool ok;
-    for (;;) {
-      // Block waiting to read the next event from the completion queue. The
-      // event is uniquely identified by its tag, which in this case is the
-      // memory address of a CallData instance.
-      // The return value of Next should always be checked. This return value
-      // tells us whether there is any kind of event or cq_ is shutting down.
-      GPR_ASSERT(cq_->Next(&tag, &ok));
+    // Block waiting to read the next event from the completion queue. The
+    // event is uniquely identified by its tag, which in this case is the
+    // memory address of a CallData instance.
+    // The return value of Next should always be checked. This return value
+    // tells us whether there is any kind of event or cq_ is shutting down.
+    while (cq_->Next(&tag, &ok)) {
       static_cast<CallData*>(tag)->Proceed(ok);
     }
   }
@@ -138,6 +142,7 @@ class ServerImpl final {
   std::unique_ptr<grpc::ServerCompletionQueue> cq_;
   helloworld::Greeter::AsyncService service_;
   std::unique_ptr<grpc::Server> server_;
+  std::thread shutdown_thread_;
 };
 
 }  // namespace stuff

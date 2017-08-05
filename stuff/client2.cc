@@ -9,7 +9,6 @@
 #include <mutex>
 #include <condition_variable>
 #include <time.h>
-#include <unistd.h>
 
 #include "utils.h"
 #include "stuff/helloworld.grpc.pb.h"
@@ -80,7 +79,7 @@ class GreeterClient {
       // corresponds solely to the request for updates introduced by Finish().
       GPR_ASSERT(ok);
 
-      if (!call->status.ok()) std::abort();
+      GPR_ASSERT(call->status.ok());
 
       // Once we're complete, deallocate the call object.
       delete call;
@@ -152,7 +151,7 @@ int main() {
     }
     ns0 = ns1;
     num_total0 = num_total1;
-    sleep(1);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   return 0;
 }
