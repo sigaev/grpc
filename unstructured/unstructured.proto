@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package unstructured;
+
+service Unstructured {
+  rpc Process (UnstructuredRequest) returns (UnstructuredReply) {}
+}
+
+message UnstructuredRequest {
+  string input = 1;
+}
+
+message UnstructuredReply {
+  string output = 1;
+}

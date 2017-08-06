@@ -1,10 +1,10 @@
-#ifndef _STUFF_UTILS_H_
-#define _STUFF_UTILS_H_
+#ifndef _UNSTRUCTURED_UTILS_H_
+#define _UNSTRUCTURED_UTILS_H_
 
 #include <fstream>
 #include <string>
 
-namespace stuff {
+namespace unstructured {
 
 inline std::string ReadFile(const char* fname) {
   std::ifstream is(fname);
@@ -19,6 +19,6 @@ inline std::string ReadFile(const char* fname) {
   return s;
 }
 
-}  // namespace stuff
+}  // namespace unstructured
 
-#endif  // _STUFF_UTILS_H_
+#endif  // _UNSTRUCTURED_UTILS_H_

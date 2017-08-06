@@ -5,31 +5,31 @@
 #include <grpc++/grpc++.h>
 #include <grpc/support/log.h>
 
-#include "stuff/helloworld.grpc.pb.h"
+#include "unstructured/unstructured.grpc.pb.h"
 
 using grpc::Channel;
 using grpc::ClientAsyncResponseReader;
 using grpc::ClientContext;
 using grpc::CompletionQueue;
 using grpc::Status;
-using helloworld::HelloRequest;
-using helloworld::HelloReply;
-using helloworld::Greeter;
+using unstructured::UnstructuredRequest;
+using unstructured::UnstructuredReply;
+using unstructured::Unstructured;
 
-class GreeterClient {
+class UnstructuredClient {
  public:
-  explicit GreeterClient(std::shared_ptr<Channel> channel)
-      : stub_(Greeter::NewStub(channel)) {}
+  explicit UnstructuredClient(std::shared_ptr<Channel> channel)
+      : stub_(Unstructured::NewStub(channel)) {}
 
   // Assembles the client's payload, sends it and presents the response back
   // from the server.
-  std::string SayHello(const std::string& user) {
+  std::string Process(const std::string& user) {
     // Data we are sending to the server.
-    HelloRequest request;
-    request.set_name(user);
+    UnstructuredRequest request;
+    request.set_input(user);
 
     // Container for the data we expect from the server.
-    HelloReply reply;
+    UnstructuredReply reply;
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
@@ -42,11 +42,11 @@ class GreeterClient {
     // Storage for the status of the RPC upon completion.
     Status status;
 
-    // stub_->AsyncSayHello() performs the RPC call, returning an instance we
+    // stub_->AsyncProcess() performs the RPC call, returning an instance we
     // store in "rpc". Because we are using the asynchronous API, we need to
     // hold on to the "rpc" instance in order to get updates on the ongoing RPC.
-    std::unique_ptr<ClientAsyncResponseReader<HelloReply> > rpc(
-        stub_->AsyncSayHello(&context, request, &cq));
+    std::unique_ptr<ClientAsyncResponseReader<UnstructuredReply> > rpc(
+        stub_->AsyncProcess(&context, request, &cq));
 
     // Request that, upon completion of the RPC, "reply" be updated with the
     // server's response; "status" with the indication of whether the operation
@@ -68,7 +68,7 @@ class GreeterClient {
 
     // Act upon the status of the actual RPC.
     if (status.ok()) {
-      return reply.message();
+      return reply.output();
     } else {
       return "RPC failed";
     }
@@ -77,7 +77,7 @@ class GreeterClient {
  private:
   // Out of the passed in Channel comes the stub, stored here, our view of the
   // server's exposed services.
-  std::unique_ptr<Greeter::Stub> stub_;
+  std::unique_ptr<Unstructured::Stub> stub_;
 };
 
 int main(int argc, char** argv) {
@@ -85,11 +85,11 @@ int main(int argc, char** argv) {
   // are created. This channel models a connection to an endpoint (in this case,
   // localhost at port 50051). We indicate that the channel isn't authenticated
   // (use of InsecureChannelCredentials()).
-  GreeterClient greeter(grpc::CreateChannel(
+  UnstructuredClient uc(grpc::CreateChannel(
       "localhost:50051", grpc::InsecureChannelCredentials()));
   std::string user("world");
-  std::string reply = greeter.SayHello(user);  // The actual RPC call!
-  std::cout << "Greeter received: " << reply << std::endl;
+  std::string reply = uc.Process(user);  // The actual RPC call!
+  std::cout << "Unstructured received: " << reply << std::endl;
 
   return 0;
 }

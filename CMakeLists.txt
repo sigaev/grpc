@@ -3586,33 +3586,33 @@ if (gRPC_INSTALL)
 endif()
 
 protobuf_generate_grpc_cpp(
-  stuff/helloworld.proto
+  unstructured/unstructured.proto
 )
 
-add_library(helloworld
-  ${_gRPC_PROTO_GENS_DIR}/stuff/helloworld.pb.cc
-  ${_gRPC_PROTO_GENS_DIR}/stuff/helloworld.grpc.pb.cc
-  ${_gRPC_PROTO_GENS_DIR}/stuff/helloworld.pb.h
-  ${_gRPC_PROTO_GENS_DIR}/stuff/helloworld.grpc.pb.h
+add_library(unstructured
+  ${_gRPC_PROTO_GENS_DIR}/unstructured/unstructured.pb.cc
+  ${_gRPC_PROTO_GENS_DIR}/unstructured/unstructured.grpc.pb.cc
+  ${_gRPC_PROTO_GENS_DIR}/unstructured/unstructured.pb.h
+  ${_gRPC_PROTO_GENS_DIR}/unstructured/unstructured.grpc.pb.h
 )
 
 add_executable(server
-  stuff/server.cc
+  unstructured/server.cc
 )
 
 add_executable(client0
-  stuff/client0.cc
+  unstructured/client0.cc
 )
 
 add_executable(client1
-  stuff/client1.cc
+  unstructured/client1.cc
 )
 
 add_executable(client2
-  stuff/client2.cc
+  unstructured/client2.cc
 )
 
-target_include_directories(helloworld
+target_include_directories(unstructured
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/protobuf/src
   PRIVATE ${_gRPC_PROTO_GENS_DIR}
@@ -3644,22 +3644,22 @@ target_include_directories(client2
 
 target_link_libraries(server
   grpc++
-  helloworld
+  unstructured
 )
 
 target_link_libraries(client0
   grpc++
-  helloworld
+  unstructured
 )
 
 target_link_libraries(client1
   grpc++
-  helloworld
+  unstructured
 )
 
 target_link_libraries(client2
   grpc++
-  helloworld
+  unstructured
 )
 
 if (gRPC_BUILD_TESTS)

@@ -6,10 +6,10 @@
 #include <grpc++/grpc++.h>
 #include <grpc/support/log.h>
 
+#include "unstructured/unstructured.grpc.pb.h"
 #include "utils.h"
-#include "stuff/helloworld.grpc.pb.h"
 
-namespace stuff {
+namespace unstructured {
 
 class ServerImpl final {
  public:
@@ -24,9 +24,10 @@ class ServerImpl final {
 
     grpc::ServerBuilder builder;
     grpc::SslServerCredentialsOptions ssco;
-    ssco.pem_root_certs = ReadFile("stuff/keys/root-cert.pem");
-    ssco.pem_key_cert_pairs.push_back({ReadFile("stuff/keys/a-key.pem"),
-                                       ReadFile("stuff/keys/a-cert.pem")});
+    ssco.pem_root_certs = ReadFile("unstructured/keys/root-cert.pem");
+    ssco.pem_key_cert_pairs.push_back(
+        {ReadFile("unstructured/keys/a-key.pem"),
+         ReadFile("unstructured/keys/a-cert.pem")});
     // Listen on the given address without any authentication mechanism.
     builder.AddListeningPort(server_address, grpc::SslServerCredentials(ssco));
     // Register "service_" as the instance through which we'll communicate with
@@ -55,7 +56,7 @@ class ServerImpl final {
     // Take in the "service" instance (in this case representing an asynchronous
     // server) and the completion queue "cq" used for asynchronous communication
     // with the gRPC runtime.
-    CallData(helloworld::Greeter::AsyncService* service,
+    CallData(unstructured::Unstructured::AsyncService* service,
              grpc::ServerCompletionQueue* cq) : service_(service), cq_(cq) {
       // Invoke the serving logic right away.
       Proceed(true);
@@ -70,12 +71,12 @@ class ServerImpl final {
           status_ = CallStatus::PROCESS;
 
           // As part of the initial CREATE state, we *request* that the system
-          // start processing SayHello requests. In this request, "this" acts
+          // start processing Process requests. In this request, "this" acts
           // are the tag uniquely identifying the request (so that different
           // CallData instances can serve different requests concurrently), in
           // this case the memory address of this CallData instance.
-          service_->RequestSayHello(&ctx_, &request_, &responder_, cq_, cq_,
-                                    this);
+          service_->RequestProcess(&ctx_, &request_, &responder_, cq_, cq_,
+                                   this);
           break;
         case CallStatus::PROCESS:
           // Spawn a new CallData instance to serve new clients while we process
@@ -84,7 +85,7 @@ class ServerImpl final {
           new CallData(service_, cq_);
 
           // The actual processing.
-          reply_.set_message("Hello " + request_.name());
+          reply_.set_output("Hello " + request_.input());
 
           // And we are done! Let the gRPC runtime know we've finished, using
           // the memory address of this instance as the uniquely identifying tag
@@ -102,7 +103,7 @@ class ServerImpl final {
    private:
     // The means of communication with the gRPC runtime for an asynchronous
     // server.
-    helloworld::Greeter::AsyncService* const service_;
+    unstructured::Unstructured::AsyncService* const service_;
     // The producer-consumer queue where for asynchronous server notifications.
     grpc::ServerCompletionQueue* const cq_;
     // Context for the rpc, allowing to tweak aspects of it such as the use
@@ -111,12 +112,13 @@ class ServerImpl final {
     grpc::ServerContext ctx_;
 
     // What we get from the client.
-    helloworld::HelloRequest request_;
+    unstructured::UnstructuredRequest request_;
     // What we send back to the client.
-    helloworld::HelloReply reply_;
+    unstructured::UnstructuredReply reply_;
 
     // The means to get back to the client.
-    grpc::ServerAsyncResponseWriter<helloworld::HelloReply> responder_{&ctx_};
+    grpc::ServerAsyncResponseWriter<unstructured::UnstructuredReply>
+        responder_{&ctx_};
 
     // Let's implement a tiny state machine with the following states.
     enum class CallStatus { CREATE, PROCESS, FINISH };
@@ -140,15 +142,15 @@ class ServerImpl final {
   }
 
   std::unique_ptr<grpc::ServerCompletionQueue> cq_;
-  helloworld::Greeter::AsyncService service_;
+  unstructured::Unstructured::AsyncService service_;
   std::unique_ptr<grpc::Server> server_;
   std::thread shutdown_thread_;
 };
 
-}  // namespace stuff
+}  // namespace unstructured
 
 int main() {
-  stuff::ServerImpl server;
+  unstructured::ServerImpl server;
   server.Run();
   return 0;
 }
