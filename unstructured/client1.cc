@@ -12,9 +12,9 @@ using grpc::ClientAsyncResponseReader;
 using grpc::ClientContext;
 using grpc::CompletionQueue;
 using grpc::Status;
-using unstructured::UnstructuredRequest;
-using unstructured::UnstructuredReply;
-using unstructured::Unstructured;
+using grpc::unstructured::UnstructuredRequest;
+using grpc::unstructured::UnstructuredReply;
+using grpc::unstructured::Unstructured;
 
 class UnstructuredClient {
  public:

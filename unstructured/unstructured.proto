@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package unstructured;
+package grpc.unstructured;
 
 service Unstructured {
   rpc Process (UnstructuredRequest) returns (UnstructuredReply) {}

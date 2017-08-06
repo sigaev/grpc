@@ -7,12 +7,13 @@
 
 #include <grpc++/grpc++.h>
 
+namespace grpc {
 namespace unstructured {
 
 class Server {
  public:
   Server(std::string address,
-         const grpc::SslServerCredentialsOptions& ssco,
+         const SslServerCredentialsOptions& ssco,
          std::function<std::string(std::string input)> rpc_cb,
          std::function<std::string(const std::string& host,
                                    const std::string& method,
@@ -29,5 +30,6 @@ class Server {
 };
 
 }  // namespace unstructured
+}  // namespace grpc
 
 #endif  // GRPCXX_UNSTRUCTURED_H

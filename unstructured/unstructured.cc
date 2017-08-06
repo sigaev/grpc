@@ -9,6 +9,7 @@
 
 #include "unstructured/unstructured.grpc.pb.h"
 
+namespace grpc {
 namespace unstructured {
 
 class Server::Impl final {
@@ -21,10 +22,10 @@ class Server::Impl final {
   }
 
   // There is no shutdown handling in this code.
-  void Run(std::string address, const grpc::SslServerCredentialsOptions& ssco) {
-    grpc::ServerBuilder builder;
+  void Run(std::string address, const SslServerCredentialsOptions& ssco) {
+    ServerBuilder builder;
     // Listen on the given address without any authentication mechanism.
-    builder.AddListeningPort(address, grpc::SslServerCredentials(ssco));
+    builder.AddListeningPort(address, SslServerCredentials(ssco));
     // Register "service_" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *asynchronous* service.
     builder.RegisterService(&service_);
@@ -46,7 +47,7 @@ class Server::Impl final {
     // server) and the completion queue "cq" used for asynchronous communication
     // with the gRPC runtime.
     CallData(Unstructured::AsyncService* service,
-             grpc::ServerCompletionQueue* cq) : service_(service), cq_(cq) {
+             ServerCompletionQueue* cq) : service_(service), cq_(cq) {
       // Invoke the serving logic right away.
       Proceed(true);
     }
@@ -80,7 +81,7 @@ class Server::Impl final {
           // the memory address of this instance as the uniquely identifying tag
           // for the event.
           status_ = CallStatus::FINISH;
-          responder_.Finish(reply_, grpc::Status::OK, this);
+          responder_.Finish(reply_, Status::OK, this);
           break;
         case CallStatus::FINISH:
           // Once in the FINISH state, deallocate ourselves (CallData).
@@ -94,11 +95,11 @@ class Server::Impl final {
     // server.
     Unstructured::AsyncService* const service_;
     // The producer-consumer queue where for asynchronous server notifications.
-    grpc::ServerCompletionQueue* const cq_;
+    ServerCompletionQueue* const cq_;
     // Context for the rpc, allowing to tweak aspects of it such as the use
     // of compression, authentication, as well as to send metadata back to the
     // client.
-    grpc::ServerContext ctx_;
+    ServerContext ctx_;
 
     // What we get from the client.
     UnstructuredRequest request_;
@@ -106,7 +107,7 @@ class Server::Impl final {
     UnstructuredReply reply_;
 
     // The means to get back to the client.
-    grpc::ServerAsyncResponseWriter<UnstructuredReply> responder_{&ctx_};
+    ServerAsyncResponseWriter<UnstructuredReply> responder_{&ctx_};
 
     // Let's implement a tiny state machine with the following states.
     enum class CallStatus { CREATE, PROCESS, FINISH };
@@ -129,14 +130,14 @@ class Server::Impl final {
     }
   }
 
-  std::unique_ptr<grpc::ServerCompletionQueue> cq_;
+  std::unique_ptr<ServerCompletionQueue> cq_;
   Unstructured::AsyncService service_;
   std::unique_ptr<grpc::Server> server_;
   std::thread handle_rpcs_thread_;
 };
 
 Server::Server(std::string address,
-               const grpc::SslServerCredentialsOptions& ssco,
+               const SslServerCredentialsOptions& ssco,
                std::function<std::string(std::string input)> rpc_cb,
                std::function<std::string(const std::string& host,
                                          const std::string& method,
@@ -149,3 +150,4 @@ Server::Server(std::string address,
 Server::~Server() {}
 
 }  // namespace unstructured
+}  // namespace grpc

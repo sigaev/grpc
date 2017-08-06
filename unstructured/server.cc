@@ -13,7 +13,7 @@ int main() {
   ssco.pem_key_cert_pairs.push_back(
       {unstructured::ReadFile("unstructured/keys/a-key.pem"),
        unstructured::ReadFile("unstructured/keys/a-cert.pem")});
-  unstructured::Server s(
+  grpc::unstructured::Server s(
       "0.0.0.0:50051",
       ssco,
       [] (std::string input) { return input; },
