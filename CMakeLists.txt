@@ -3589,11 +3589,15 @@ protobuf_generate_grpc_cpp(
   unstructured/unstructured.proto
 )
 
-add_library(unstructured
+add_library(grpc++_unstructured_proto
   ${_gRPC_PROTO_GENS_DIR}/unstructured/unstructured.pb.cc
   ${_gRPC_PROTO_GENS_DIR}/unstructured/unstructured.grpc.pb.cc
   ${_gRPC_PROTO_GENS_DIR}/unstructured/unstructured.pb.h
   ${_gRPC_PROTO_GENS_DIR}/unstructured/unstructured.grpc.pb.h
+)
+
+add_library(grpc++_unstructured
+  unstructured/unstructured.cc
 )
 
 add_executable(server
@@ -3612,7 +3616,13 @@ add_executable(client2
   unstructured/client2.cc
 )
 
-target_include_directories(unstructured
+target_include_directories(grpc++_unstructured_proto
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/protobuf/src
+  PRIVATE ${_gRPC_PROTO_GENS_DIR}
+)
+
+target_include_directories(grpc++_unstructured
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/protobuf/src
   PRIVATE ${_gRPC_PROTO_GENS_DIR}
@@ -3642,24 +3652,30 @@ target_include_directories(client2
   PRIVATE ${_gRPC_PROTO_GENS_DIR}
 )
 
+target_link_libraries(grpc++_unstructured
+  grpc++
+  grpc++_unstructured_proto
+)
+
 target_link_libraries(server
   grpc++
-  unstructured
+  grpc++_unstructured
+  grpc++_unstructured_proto
 )
 
 target_link_libraries(client0
   grpc++
-  unstructured
+  grpc++_unstructured_proto
 )
 
 target_link_libraries(client1
   grpc++
-  unstructured
+  grpc++_unstructured_proto
 )
 
 target_link_libraries(client2
   grpc++
-  unstructured
+  grpc++_unstructured_proto
 )
 
 if (gRPC_BUILD_TESTS)

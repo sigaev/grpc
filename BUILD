@@ -1399,6 +1399,7 @@ GRPCXX_PUBLIC_HDRS = [
     "include/grpc++/support/stub_options.h",
     "include/grpc++/support/sync_stream.h",
     "include/grpc++/support/time.h",
+    "include/grpc++/unstructured.h",
 ]
 
 grpc_cc_library(
