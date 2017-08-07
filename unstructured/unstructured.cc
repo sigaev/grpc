@@ -7,6 +7,26 @@
 namespace grpc {
 namespace unstructured {
 
+struct Server::ServerWithServices {
+  std::unique_ptr<ServerCompletionQueue> cq;
+  std::unique_ptr<grpc::Server> server;
+  std::deque<std::unique_ptr<ServiceBase>> services;
+};
+
+Server::Builder& Server::Builder::AddListeningPort(
+    const std::string& addr,
+    std::shared_ptr<ServerCredentials> creds,
+    int* selected_port) {
+  builder_.AddListeningPort(addr, std::move(creds), selected_port);
+  return *this;
+}
+
+Server Server::Builder::BuildAndStart() {
+  return Server({builder_.AddCompletionQueue(),
+                 builder_.BuildAndStart(),
+                 std::move(services_)});
+}
+
 class Server::Impl final {
  public:
   explicit Impl(ServerWithServices sws) {

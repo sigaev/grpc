@@ -15,6 +15,13 @@ class Server final {
  public:
   class Builder;
 
+  Server(Server&& other);
+  ~Server();
+
+ private:
+  class Impl;
+  struct ServerWithServices;
+
   class CallDataBase {
    public:
     CallDataBase() = default;
@@ -38,19 +45,10 @@ class Server final {
     ServiceBase& operator=(const ServiceBase& other) = delete;
   };
 
-  struct ServerWithServices {
-    std::unique_ptr<ServerCompletionQueue> cq;
-    std::unique_ptr<grpc::Server> server;
-    std::deque<std::unique_ptr<ServiceBase>> services;
-  };
-
-  Server(Server&& other);
-  ~Server();
-
- private:
-  class Impl;
   explicit Server(ServerWithServices sws);
+
   std::unique_ptr<Impl> impl_;
+
   Server(const Server& other) = delete;
   Server& operator=(const Server& other) = delete;
 };
@@ -61,10 +59,7 @@ class Server::Builder final {
 
   Builder& AddListeningPort(const std::string& addr,
                             std::shared_ptr<ServerCredentials> creds,
-                            int* selected_port = nullptr) {
-    builder_.AddListeningPort(addr, std::move(creds), selected_port);
-    return *this;
-  }
+                            int* selected_port = nullptr);
 
   template <class S, class X, class Y>
   Builder& AddService(std::function<void(const X&, Y*)> handler) {
@@ -74,11 +69,7 @@ class Server::Builder final {
     return *this;
   }
 
-  Server BuildAndStart() {
-    return Server({builder_.AddCompletionQueue(),
-                   builder_.BuildAndStart(),
-                   std::move(services_)});
-  }
+  Server BuildAndStart();
 
  private:
   template <class, class, class> class Service;
