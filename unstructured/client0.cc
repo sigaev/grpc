@@ -10,17 +10,17 @@
 class UnstructuredClient {
  public:
   UnstructuredClient(std::shared_ptr<grpc::Channel> channel)
-      : stub_(grpc::unstructured::Unstructured::NewStub(channel)) {}
+      : stub_(grpc::unstructured::Test::NewStub(channel)) {}
 
   // Assembles the client's payload, sends it and presents the response back
   // from the server.
-  std::string Process(const std::string& user) {
+  int Process(const std::string& user) {
     // Data we are sending to the server.
-    grpc::unstructured::UnstructuredRequest request;
-    request.set_input(user);
+    grpc::unstructured::TestRequest request;
+    request.set_input(13);
 
     // Container for the data we expect from the server.
-    grpc::unstructured::UnstructuredReply reply;
+    grpc::unstructured::TestReply reply;
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
@@ -35,12 +35,12 @@ class UnstructuredClient {
     } else {
       std::cout << status.error_code() << ": " << status.error_message()
                 << std::endl;
-      return "RPC failed";
+      return -1;
     }
   }
 
  private:
-  std::unique_ptr<grpc::unstructured::Unstructured::Stub> stub_;
+  std::unique_ptr<grpc::unstructured::Test::Stub> stub_;
 };
 
 int main(int argc, char** argv) {
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
            "",
            ""})));
   std::string user("world");
-  std::string reply = uc.Process(user);
+  auto reply = uc.Process(user);
   std::cout << "Unstructured received: " << reply << std::endl;
 
   return 0;

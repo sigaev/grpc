@@ -5,6 +5,7 @@
 #include <grpc++/grpc++.h>
 #include <grpc++/unstructured.h>
 
+#include "unstructured/unstructured.grpc.pb.h"
 #include "utils.h"
 
 int main() {
@@ -13,17 +14,23 @@ int main() {
   ssco.pem_key_cert_pairs.push_back(
       {unstructured::ReadFile("unstructured/keys/a-key.pem"),
        unstructured::ReadFile("unstructured/keys/a-cert.pem")});
-  grpc::unstructured::Server s(
-      "0.0.0.0:50051",
-      ssco,
-      [] (std::string input) { return input; },
-      [] (const std::string& host,
-          const std::string& method,
-          std::string input,
-          const char** content_type) {
-        *content_type = "text/html";
-        return input;
-      });
+  auto server = grpc::unstructured::Server::Builder()
+      .AddListeningPort("0.0.0.0:50051", SslServerCredentials(ssco))
+      .AddService<grpc::unstructured::Test,
+                  grpc::unstructured::TestRequest,
+                  grpc::unstructured::TestReply>(
+          [] (const grpc::unstructured::TestRequest& request,
+              grpc::unstructured::TestReply* reply) {
+            reply->set_output(13 + 2 * request.input());
+          })
+      .AddService<grpc::unstructured::Unstructured,
+                  grpc::unstructured::UnstructuredRequest,
+                  grpc::unstructured::UnstructuredReply>(
+          [] (const grpc::unstructured::UnstructuredRequest& request,
+              grpc::unstructured::UnstructuredReply* reply) {
+            reply->set_output("Hello " + request.input());
+          })
+      .BuildAndStart();
   std::this_thread::sleep_for(std::chrono::seconds(60));
   return 0;
 }

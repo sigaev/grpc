@@ -13,3 +13,15 @@ message UnstructuredRequest {
 message UnstructuredReply {
   string output = 1;
 }
+
+service Test {
+  rpc Process (TestRequest) returns (TestReply) {}
+}
+
+message TestRequest {
+  int32 input = 1;
+}
+
+message TestReply {
+  int32 output = 1;
+}
