@@ -9,6 +9,9 @@
 #include <mutex>
 #include <condition_variable>
 #include <time.h>
+#if _WINDOWS
+#include <windows.h>
+#endif
 
 #include "unstructured/unstructured.grpc.pb.h"
 #include "utils.h"
@@ -144,12 +147,21 @@ int main() {
   uint64_t ns0 = 0;
   uint64_t num_total0 = 0;
   for (;;) {
+#if _WINDOWS
+    LARGE_INTEGER count, freq;
+    QueryPerformanceCounter(&count);
+    QueryPerformanceFrequency(&freq);
+    const uint64_t ns1 = count.QuadPart;
+    const double scale = freq.QuadPart;
+#else
     timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     const uint64_t ns1 = ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+    const double scale = 1e9;
+#endif
     const uint64_t num_total1 = g_num_total.load(std::memory_order_relaxed);
     if (ns0 != 0) {
-      std::cout << (num_total1 - num_total0) * 1e9 / (ns1 - ns0) << std::endl;
+      std::cout << (num_total1 - num_total0) * scale / (ns1 - ns0) << std::endl;
     }
     ns0 = ns1;
     num_total0 = num_total1;
