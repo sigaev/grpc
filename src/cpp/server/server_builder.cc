@@ -259,7 +259,7 @@ std::unique_ptr<Server> ServerBuilder::BuildAndStart() {
 
   if (has_sync_methods) {
     // This is a Sync server
-    gpr_log(GPR_INFO,
+    gpr_log(GPR_ERROR,
             "Synchronous server. Num CQs: %d, Min pollers: %d, Max Pollers: "
             "%d, CQ timeout (msec): %d",
             sync_server_settings_.num_cqs, sync_server_settings_.min_pollers,

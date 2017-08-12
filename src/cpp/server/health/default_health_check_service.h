@@ -49,6 +49,8 @@ class DefaultHealthCheckService final : public HealthCheckServiceInterface {
   // The service impl to register with the server.
   class HealthCheckServiceImpl : public Service {
    public:
+    class AsyncService {};
+
     explicit HealthCheckServiceImpl(DefaultHealthCheckService* service);
 
     Status Check(ServerContext* context, const ByteBuffer* request,

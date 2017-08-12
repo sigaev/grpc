@@ -117,7 +117,7 @@ void UnknownMethodHandler::FillOps(
     CallOpSet<CallOpSendInitialMetadata,
               CallOpSendMessage,
               CallOpServerSendStatus>* ops) {
-  Status status(StatusCode::UNIMPLEMENTED, "");
+  Status status = Status::OK;
   static std::atomic<int> count(0);
   if (!context->sent_initial_metadata_) {
     ops->SendInitialMetadata(context->initial_metadata_,
@@ -142,9 +142,9 @@ void UnknownMethodHandler::FillOps(
                 [](void* str) { delete static_cast<std::string*>(str); },
                 str),
             Slice::STEAL_REF);
-    ops->SendMessage(ByteBuffer(&s, 1), WriteOptions().set_raw());
+    status = ops->SendMessage(ByteBuffer(&s, 1), WriteOptions().set_raw());
   }
-  ops->ServerSendStatus(context->trailing_metadata_, Status::OK);
+  ops->ServerSendStatus(context->trailing_metadata_, status);
 }
 
 }  // namespace grpc

@@ -34,6 +34,7 @@
 #ifndef GRPCXX_IMPL_CODEGEN_METHOD_HANDLER_IMPL_H
 #define GRPCXX_IMPL_CODEGEN_METHOD_HANDLER_IMPL_H
 
+#include <grpc++/impl/codegen/async_unary_call.h>
 #include <grpc++/impl/codegen/core_codegen_interface.h>
 #include <grpc++/impl/codegen/rpc_service_method.h>
 #include <grpc++/impl/codegen/sync_stream.h>
@@ -77,6 +78,9 @@ class RpcMethodHandler : public MethodHandler {
   }
 
  private:
+  class CallData;
+  void NewCallData(ServerCompletionQueue* cq, size_t idx) final;
+
   /// Application provided rpc handler function.
   std::function<Status(ServiceType*, ServerContext*, const RequestType*,
                        ResponseType*)>
@@ -84,6 +88,102 @@ class RpcMethodHandler : public MethodHandler {
   // The class the above handler function lives in.
   ServiceType* service_;
 };
+
+namespace unstructured {
+
+class CallDataBase {
+ public:
+  virtual ~CallDataBase() {}
+  virtual void Proceed(bool ok) = 0;
+};
+
+}  // namespace unstructured
+
+template <class ServiceType, class RequestType, class ResponseType>
+class RpcMethodHandler<ServiceType, RequestType, ResponseType>::CallData final
+    : public unstructured::CallDataBase {
+ public:
+  // Take in the "service" instance (in this case representing an asynchronous
+  // server) and the completion queue "cq" used for asynchronous communication
+  // with the gRPC runtime.
+  CallData(RpcMethodHandler* handler, ServerCompletionQueue* cq, size_t idx)
+      : handler_(handler), cq_(cq), idx_(idx) {
+    // Invoke the serving logic right away.
+    Proceed(true);
+  }
+
+  void Proceed(bool ok) override {
+    if (!ok) status_ = CallStatus::FINISH;
+
+    switch (status_) {
+      case CallStatus::CREATE: {
+        // Make this instance progress to the PROCESS state.
+        status_ = CallStatus::PROCESS;
+
+        // As part of the initial CREATE state, we *request* that the system
+        // start processing Process requests. In this request, "this" acts
+        // are the tag uniquely identifying the request (so that different
+        // CallData instances can serve different requests concurrently), in
+        // this case the memory address of this CallData instance.
+        handler_->service_->RequestAsyncUnary(
+            idx_, &ctx_, &request_, &responder_, cq_, cq_, this);
+        break;
+      }
+      case CallStatus::PROCESS: {
+        // Spawn a new CallData instance to serve new clients while we process
+        // the one for this CallData. The instance will deallocate itself as
+        // part of its FINISH state.
+        new CallData(handler_, cq_, idx_);
+
+        // The actual processing.
+        Status status =
+            handler_->func_(handler_->service_, &ctx_, &request_, &reply_);
+
+        // And we are done! Let the gRPC runtime know we've finished, using
+        // the memory address of this instance as the uniquely identifying tag
+        // for the event.
+        status_ = CallStatus::FINISH;
+        responder_.Finish(reply_, status, this);
+        break;
+      }
+      case CallStatus::FINISH: {
+        // Once in the FINISH state, deallocate ourselves (CallData).
+        delete this;
+        break;
+      }
+    }
+  }
+
+ private:
+  // The means of communication with the gRPC runtime for an asynchronous
+  // server.
+  RpcMethodHandler* const handler_;
+  // The producer-consumer queue where for asynchronous server notifications.
+  ServerCompletionQueue* const cq_;
+  const size_t idx_;
+  // Context for the rpc, allowing to tweak aspects of it such as the use
+  // of compression, authentication, as well as to send metadata back to the
+  // client.
+  ServerContext ctx_;
+
+  // What we get from the client.
+  RequestType request_;
+  // What we send back to the client.
+  ResponseType reply_;
+
+  // The means to get back to the client.
+  ServerAsyncResponseWriter<ResponseType> responder_{&ctx_};
+
+  // Let's implement a tiny state machine with the following states.
+  enum class CallStatus { CREATE, PROCESS, FINISH };
+  CallStatus status_{CallStatus::CREATE};  // The current serving state.
+};
+
+template <class ServiceType, class RequestType, class ResponseType>
+void RpcMethodHandler<ServiceType, RequestType, ResponseType>::NewCallData(
+    ServerCompletionQueue* cq, size_t idx) {
+  new CallData(this, cq, idx);
+}
 
 /// A wrapper class of an application provided client streaming handler.
 template <class ServiceType, class RequestType, class ResponseType>

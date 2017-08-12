@@ -49,6 +49,7 @@ struct grpc_byte_buffer;
 }
 
 namespace grpc {
+class ServerCompletionQueue;
 class ServerContext;
 class StreamContextInterface;
 
@@ -65,6 +66,7 @@ class MethodHandler {
     grpc_byte_buffer* request;
   };
   virtual void RunHandler(const HandlerParameter& param) = 0;
+  virtual void NewCallData(ServerCompletionQueue* cq, size_t idx) {}
 };
 
 /// Server side rpc method class
@@ -81,6 +83,9 @@ class RpcServiceMethod : public RpcMethod {
   MethodHandler* handler() const { return handler_.get(); }
   void ResetHandler() { handler_.reset(); }
   void SetHandler(MethodHandler* handler) { handler_.reset(handler); }
+  std::unique_ptr<MethodHandler> ReleaseHandler() {
+    return std::move(handler_);
+  }
 
  private:
   void* server_tag_;

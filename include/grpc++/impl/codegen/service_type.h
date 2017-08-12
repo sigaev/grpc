@@ -100,7 +100,10 @@ class Service {
     return false;
   }
 
- protected:
+  const std::vector<std::unique_ptr<RpcServiceMethod>>& methods() const {
+    return methods_;
+  }
+
   template <class Message>
   void RequestAsyncUnary(int index, ServerContext* context, Message* request,
                          ServerAsyncStreamingInterface* stream,

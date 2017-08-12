@@ -3652,6 +3652,10 @@ target_include_directories(client2
   PRIVATE ${_gRPC_PROTO_GENS_DIR}
 )
 
+target_link_libraries(grpc++_unstructured_proto
+  grpc++
+)
+
 target_link_libraries(grpc++_unstructured
   grpc++
   grpc++_unstructured_proto
