@@ -126,24 +126,24 @@ void UnknownMethodHandler::FillOps(
       ops->set_compression_level(context->compression_level());
     }
     context->sent_initial_metadata_ = true;
-    auto* const str = new std::string(1024, 0);
-    str->resize(snprintf(&str->front(),
-                         str->size(),
+  }
+  auto* const str = new std::string(1024, 0);
+  str->resize(snprintf(&str->front(),
+                       str->size(),
 "<html><head><link rel=icon href=\"data:image/png;base64,"
 "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAA"
 "AABJRU5ErkJggg==\"></head>"
 "<body>This <b>is</b> HTML: %d. Навуходоносор. 小米科技. Method: %s</body></html>",
-                         count++,
-                         static_cast<GenericServerContext*>(context)
-                             ->method().c_str()));
-    Slice s(g_core_codegen_interface->grpc_slice_new_with_user_data(
-                &str->front(),
-                str->size(),
-                [](void* str) { delete static_cast<std::string*>(str); },
-                str),
-            Slice::STEAL_REF);
-    status = ops->SendMessage(ByteBuffer(&s, 1), WriteOptions().set_raw());
-  }
+                       count++,
+                       static_cast<GenericServerContext*>(context)
+                           ->method().c_str()));
+  Slice s(g_core_codegen_interface->grpc_slice_new_with_user_data(
+              &str->front(),
+              str->size(),
+              [](void* str) { delete static_cast<std::string*>(str); },
+              str),
+          Slice::STEAL_REF);
+  status = ops->SendMessage(ByteBuffer(&s, 1), WriteOptions().set_raw());
   ops->ServerSendStatus(context->trailing_metadata_, status);
 }
 
