@@ -37,7 +37,6 @@
    headers. Therefore, sockaddr.h must always be included first */
 #include "src/core/lib/iomgr/sockaddr.h"
 
-#include <string.h>
 #include <grpc/slice.h>
 #include <grpc/slice_buffer.h>
 #include <grpc/support/alloc.h>
@@ -279,17 +278,10 @@ static void endpoint_write(grpc_exec_ctx *exec_ctx, grpc_endpoint *secure_ep,
     }
   }
 
-  char orig[] = "application/grpc";
-  char repl[sizeof(orig) - 1] = "text/html";
-
   for (i = 0; i < slices->count; i++) {
     grpc_slice plain = slices->slices[i];
     uint8_t *message_bytes = GRPC_SLICE_START_PTR(plain);
     size_t message_size = GRPC_SLICE_LENGTH(plain);
-    if (message_size == sizeof(repl) &&
-            strncmp((char*)message_bytes, orig, sizeof(repl)) == 0) {
-      message_bytes = (uint8_t*)repl;
-    }
     while (message_size > 0) {
       size_t protected_buffer_size_to_send = (size_t)(end - cur);
       size_t processed_message_size = message_size;

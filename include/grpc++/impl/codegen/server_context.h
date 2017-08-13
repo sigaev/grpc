@@ -241,6 +241,8 @@ class ServerContext {
   /// Applications never need to call this method.
   grpc_call* c_call() { return call_; }
 
+  void SetHTML() { initial_metadata_flags_ |= GRPC_INITIAL_METADATA_HTML; }
+
  private:
   friend class ::grpc::testing::InteropServerContextInspector;
   friend class ::grpc::testing::ServerContextTestSpouse;
@@ -285,7 +287,7 @@ class ServerContext {
 
   void set_call(grpc_call* call) { call_ = call; }
 
-  uint32_t initial_metadata_flags() const { return 0; }
+  uint32_t initial_metadata_flags() const { return initial_metadata_flags_; }
 
   CompletionOp* completion_op_;
   bool has_notify_when_done_tag_;
@@ -303,6 +305,7 @@ class ServerContext {
   bool compression_level_set_;
   grpc_compression_level compression_level_;
   grpc_compression_algorithm compression_algorithm_;
+  uint32_t initial_metadata_flags_ = 0;
 };
 
 }  // namespace grpc

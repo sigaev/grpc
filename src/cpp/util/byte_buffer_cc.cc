@@ -119,6 +119,7 @@ void UnknownMethodHandler::FillOps(
               CallOpServerSendStatus>* ops) {
   Status status = Status::OK;
   static std::atomic<int> count(0);
+  context->SetHTML();
   if (!context->sent_initial_metadata_) {
     ops->SendInitialMetadata(context->initial_metadata_,
                              context->initial_metadata_flags());
