@@ -143,6 +143,14 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
             GRPC_ERROR_STR_KEY, grpc_slice_from_static_string(":method")));
   }
 
+  bool browser = false;
+  if (b->idx.named.user_agent != NULL) {
+    grpc_slice user_agent_slice = GRPC_MDVALUE(b->idx.named.user_agent->md);
+    browser = (grpc_slice_slice(
+                   user_agent_slice,
+                   grpc_slice_from_static_string("Mozilla")) != -1);
+  }
+
   if (b->idx.named.te != NULL) {
     if (!grpc_mdelem_eq(b->idx.named.te->md, GRPC_MDELEM_TE_TRAILERS)) {
       add_error(error_name, &error,
@@ -151,8 +159,7 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
                     b->idx.named.te->md));
     }
     grpc_metadata_batch_remove(exec_ctx, b, b->idx.named.te);
-  } else {
-    if (0)
+  } else if (!browser) {
     add_error(error_name, &error,
               grpc_error_set_str(
                   GRPC_ERROR_CREATE_FROM_STATIC_STRING("Missing header"),
@@ -177,7 +184,7 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
             GRPC_ERROR_STR_KEY, grpc_slice_from_static_string(":scheme")));
   }
 
-  if (0 && b->idx.named.content_type != NULL) {
+  if (b->idx.named.content_type != NULL) {
     if (!grpc_mdelem_eq(b->idx.named.content_type->md,
                         GRPC_MDELEM_CONTENT_TYPE_APPLICATION_SLASH_GRPC)) {
       if (grpc_slice_buf_start_eq(GRPC_MDVALUE(b->idx.named.content_type->md),
@@ -211,8 +218,8 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
               grpc_error_set_str(
                   GRPC_ERROR_CREATE_FROM_STATIC_STRING("Missing header"),
                   GRPC_ERROR_STR_KEY, grpc_slice_from_static_string(":path")));
-  } else if (0 && (*calld->recv_initial_metadata_flags &
-             GRPC_INITIAL_METADATA_CACHEABLE_REQUEST)) {
+  } else if (!browser && (*calld->recv_initial_metadata_flags &
+                          GRPC_INITIAL_METADATA_CACHEABLE_REQUEST)) {
     /* We have a cacheable request made with GET verb. The path contains the
      * query parameter which is base64 encoded request payload. */
     const char k_query_separator = '?';
@@ -335,7 +342,7 @@ static void hs_mutate_op(grpc_exec_ctx *exec_ctx, grpc_call_element *elem,
             ? grpc_mdelem_from_slices(
                   exec_ctx,
                   grpc_slice_from_static_string("content-type"),
-                  grpc_slice_from_static_string("text/html"))
+                  grpc_slice_from_static_string("text/html; charset=UTF-8"))
             : GRPC_MDELEM_CONTENT_TYPE_APPLICATION_SLASH_GRPC;
     add_error(
         error_name, &error,
