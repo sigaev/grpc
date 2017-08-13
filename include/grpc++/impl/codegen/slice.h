@@ -71,6 +71,16 @@ inline grpc_slice SliceFromString(std::unique_ptr<grpc::string> str) {
       s);
 }
 
+inline grpc_slice SliceFromCharArray(std::unique_ptr<char[]> chars,
+                                     size_t size) {
+  auto* c = chars.release();
+  return g_core_codegen_interface->grpc_slice_new_with_user_data(
+      c,
+      size,
+      [] (void* c) { delete[] static_cast<char*>(c); },
+      c);
+}
+
 }  // namespace grpc
 
 #endif  // GRPCXX_IMPL_CODEGEN_SLICE_H

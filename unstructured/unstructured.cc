@@ -91,15 +91,16 @@ class Server::Impl::CallData final : public CallDataBase {
         ctx_.SetHTML();
 
         static std::atomic<int> count(0);
-        std::unique_ptr<grpc::string> str(new grpc::string(1024, 0));
-        str->resize(snprintf(&str->front(),
-                             str->size(),
+        static constexpr int kSize = 1024;
+        std::unique_ptr<char[]> chars(new char[kSize]);
+        const size_t len = std::max(0, std::min(kSize - 1,
+            snprintf(chars.get(), kSize,
 "<html><head><link rel=icon href=\"data:image/png;base64,"
 "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAA"
 "AABJRU5ErkJggg==\"></head>"
 "<body>This <b>is</b> Навуходоносор. 小米科技. Method: %s. Count: %d.</body></html>",
-                             ctx_.method().c_str(), count++));
-        Slice s(SliceFromString(std::move(str)), Slice::STEAL_REF);
+                     ctx_.method().c_str(), count++)));
+        Slice s(SliceFromCharArray(std::move(chars), len), Slice::STEAL_REF);
 
         stream_.WriteAndFinish(ByteBuffer(&s, 1), WriteOptions().set_raw(),
                                Status::OK, this);
