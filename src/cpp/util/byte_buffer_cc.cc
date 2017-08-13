@@ -127,7 +127,7 @@ void UnknownMethodHandler::FillOps(
     }
     context->sent_initial_metadata_ = true;
   }
-  auto* const str = new std::string(1024, 0);
+  std::unique_ptr<grpc::string> str(new grpc::string(1024, 0));
   str->resize(snprintf(&str->front(),
                        str->size(),
 "<html><head><link rel=icon href=\"data:image/png;base64,"
@@ -137,12 +137,7 @@ void UnknownMethodHandler::FillOps(
                        count++,
                        static_cast<GenericServerContext*>(context)
                            ->method().c_str()));
-  Slice s(g_core_codegen_interface->grpc_slice_new_with_user_data(
-              &str->front(),
-              str->size(),
-              [](void* str) { delete static_cast<std::string*>(str); },
-              str),
-          Slice::STEAL_REF);
+  Slice s(SliceFromString(std::move(str)), Slice::STEAL_REF);
   status = ops->SendMessage(ByteBuffer(&s, 1), WriteOptions().set_raw());
   ops->ServerSendStatus(context->trailing_metadata_, status);
 }
