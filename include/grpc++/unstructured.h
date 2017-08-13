@@ -40,11 +40,13 @@ class Server::Builder final {
                             std::shared_ptr<ServerCredentials> creds,
                             int* selected_port = nullptr);
   Builder& RegisterService(Service* service);
+  Builder& RegisterAsyncGenericService(AsyncGenericService* service);
   Server BuildAndStart();
 
  private:
   ServerBuilder builder_;
   std::vector<Handler> handlers_;
+  AsyncGenericService* generic_service_ = nullptr;
 
   Builder(const Builder& other) = delete;
   Builder& operator=(const Builder& other) = delete;

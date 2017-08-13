@@ -352,14 +352,8 @@ class SplitServerStreamingHandler
 /// Handle unknown method by returning UNIMPLEMENTED error.
 class UnknownMethodHandler : public MethodHandler {
  public:
-  static void FillOps(ServerContext* context,
-                      CallOpSet<CallOpSendInitialMetadata,
-                                CallOpSendMessage,
-                                CallOpServerSendStatus>* ops);
-
-  static void FillOps(ServerContext* context,
-                      CallOpSet<CallOpSendInitialMetadata,
-                                CallOpServerSendStatus>* ops) {
+  template <class T>
+  static void FillOps(ServerContext* context, T* ops) {
     Status status(StatusCode::UNIMPLEMENTED, "");
     if (!context->sent_initial_metadata_) {
       ops->SendInitialMetadata(context->initial_metadata_,

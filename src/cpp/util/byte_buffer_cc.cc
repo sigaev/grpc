@@ -32,11 +32,7 @@
  */
 
 #include <grpc++/support/byte_buffer.h>
-#include <grpc++/generic/async_generic_service.h>
-#include <grpc++/impl/codegen/method_handler_impl.h>
 #include <grpc/byte_buffer_reader.h>
-
-#include <atomic>
 
 namespace grpc {
 
@@ -110,37 +106,6 @@ void ByteBuffer::Swap(ByteBuffer* other) {
   grpc_byte_buffer* tmp = other->buffer_;
   other->buffer_ = buffer_;
   buffer_ = tmp;
-}
-
-void UnknownMethodHandler::FillOps(
-    ServerContext* context,
-    CallOpSet<CallOpSendInitialMetadata,
-              CallOpSendMessage,
-              CallOpServerSendStatus>* ops) {
-  Status status = Status::OK;
-  static std::atomic<int> count(0);
-  context->SetHTML();
-  if (!context->sent_initial_metadata_) {
-    ops->SendInitialMetadata(context->initial_metadata_,
-                             context->initial_metadata_flags());
-    if (context->compression_level_set()) {
-      ops->set_compression_level(context->compression_level());
-    }
-    context->sent_initial_metadata_ = true;
-  }
-  std::unique_ptr<grpc::string> str(new grpc::string(1024, 0));
-  str->resize(snprintf(&str->front(),
-                       str->size(),
-"<html><head><link rel=icon href=\"data:image/png;base64,"
-"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAA"
-"AABJRU5ErkJggg==\"></head>"
-"<body>This <b>is</b> HTML: %d. Навуходоносор. 小米科技. Method: %s</body></html>",
-                       count++,
-                       static_cast<GenericServerContext*>(context)
-                           ->method().c_str()));
-  Slice s(SliceFromString(std::move(str)), Slice::STEAL_REF);
-  status = ops->SendMessage(ByteBuffer(&s, 1), WriteOptions().set_raw());
-  ops->ServerSendStatus(context->trailing_metadata_, status);
 }
 
 }  // namespace grpc

@@ -2,6 +2,7 @@
 #include <string>
 #include <thread>
 
+#include <grpc++/generic/async_generic_service.h>
 #include <grpc++/grpc++.h>
 #include <grpc++/unstructured.h>
 
@@ -40,10 +41,12 @@ int main() {
        unstructured::ReadFile("unstructured/keys/a-cert.pem")});
   grpc::unstructured::TestService test_service;
   grpc::unstructured::UnstructuredService unstructured_service;
+  grpc::AsyncGenericService ags;
   auto server = grpc::unstructured::Server::Builder()
       .AddListeningPort("0.0.0.0:50051", SslServerCredentials(ssco))
       .RegisterService(&test_service)
       .RegisterService(&unstructured_service)
+      .RegisterAsyncGenericService(&ags)
       .BuildAndStart();
   std::this_thread::sleep_for(std::chrono::seconds(60));
   return 0;

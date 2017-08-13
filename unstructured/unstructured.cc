@@ -1,8 +1,10 @@
 #include <grpc++/unstructured.h>
 
+#include <atomic>
 #include <thread>
 
 #include <grpc/support/log.h>
+#include <grpc++/generic/async_generic_service.h>
 #include <grpc++/impl/codegen/method_handler_impl.h>
 
 namespace grpc {
@@ -17,6 +19,7 @@ struct Server::ServerWithFriends {
   std::unique_ptr<ServerCompletionQueue> cq;
   std::unique_ptr<grpc::Server> server;
   std::vector<Handler> handlers;
+  AsyncGenericService* generic_service;
 };
 
 Server::Builder& Server::Builder::AddListeningPort(
@@ -28,18 +31,25 @@ Server::Builder& Server::Builder::AddListeningPort(
 }
 
 Server::Builder& Server::Builder::RegisterService(Service* service) {
-    builder_.RegisterService(service);
-    const auto& methods = service->methods();
-    for (size_t idx = 0; idx < methods.size(); ++idx) {
-      handlers_.push_back({methods[idx]->ReleaseHandler(), idx});
-    }
-    return *this;
+  builder_.RegisterService(service);
+  const auto& methods = service->methods();
+  for (size_t idx = 0; idx < methods.size(); ++idx) {
+    handlers_.push_back({methods[idx]->ReleaseHandler(), idx});
   }
+  return *this;
+}
+
+Server::Builder& Server::Builder::RegisterAsyncGenericService(AsyncGenericService* service) {
+  builder_.RegisterAsyncGenericService(service);
+  generic_service_ = service;
+  return *this;
+}
 
 Server Server::Builder::BuildAndStart() {
   return Server({builder_.AddCompletionQueue(),
                  builder_.BuildAndStart(),
-                 std::move(handlers_)});
+                 std::move(handlers_),
+                 generic_service_});
 }
 
 class Server::Impl final {
@@ -57,29 +67,81 @@ class Server::Impl final {
   }
 
  private:
-  // This can be run in multiple threads if needed.
-  void HandleRpcs() {
-    gpr_log(GPR_ERROR, "Handling RPCs");
-    // Spawn a new CallData instance to serve new clients.
-    auto* cq = server_with_friends_.cq.get();
-    for (const auto& handler : server_with_friends_.handlers) {
-      handler.ptr->NewCallData(cq, handler.idx);
-    }
-    void* tag;  // uniquely identifies a request.
-    bool ok;
-    // Block waiting to read the next event from the completion queue. The
-    // event is uniquely identified by its tag, which in this case is the
-    // memory address of a CallData instance.
-    // The return value of Next should always be checked. This return value
-    // tells us whether there is any kind of event or cq is shutting down.
-    while (cq->Next(&tag, &ok)) {
-      static_cast<CallDataBase*>(tag)->Proceed(ok);
-    }
-  }
+  class CallData;
+  void HandleRpcs();
 
   ServerWithFriends server_with_friends_;
   std::thread handle_rpcs_thread_;
 };
+
+class Server::Impl::CallData final : public CallDataBase {
+ public:
+  CallData(AsyncGenericService* service, ServerCompletionQueue* cq)
+      : generic_service_(service), cq_(cq) {
+    generic_service_->RequestCall(&ctx_, &stream_, cq_, cq_, this);
+  }
+
+  void Proceed(bool ok) override {
+    if (!ok) status_ = CallStatus::FINISH;
+
+    switch (status_) {
+      case CallStatus::PROCESS: {
+        new CallData(generic_service_, cq_);
+
+        ctx_.SetHTML();
+
+        static std::atomic<int> count(0);
+        std::unique_ptr<grpc::string> str(new grpc::string(1024, 0));
+        str->resize(snprintf(&str->front(),
+                             str->size(),
+"<html><head><link rel=icon href=\"data:image/png;base64,"
+"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAA"
+"AABJRU5ErkJggg==\"></head>"
+"<body>This <b>is</b> Навуходоносор. 小米科技. Method: %s. Count: %d.</body></html>",
+                             ctx_.method().c_str(), count++));
+        Slice s(SliceFromString(std::move(str)), Slice::STEAL_REF);
+
+        stream_.WriteAndFinish(ByteBuffer(&s, 1), WriteOptions().set_raw(),
+                               Status::OK, this);
+        status_ = CallStatus::FINISH;
+        break;
+      }
+      case CallStatus::FINISH: {
+        delete this;
+        break;
+      }
+    }
+  }
+
+ private:
+  AsyncGenericService* const generic_service_;
+  ServerCompletionQueue* const cq_;
+  GenericServerContext ctx_;
+  GenericServerAsyncReaderWriter stream_{&ctx_};
+  enum class CallStatus { PROCESS, FINISH };
+  CallStatus status_{CallStatus::PROCESS};
+};
+
+// This can be run in multiple threads if needed.
+void Server::Impl::HandleRpcs() {
+  gpr_log(GPR_ERROR, "Handling RPCs");
+  // Spawn a new CallData instance to serve new clients.
+  auto* cq = server_with_friends_.cq.get();
+  for (const auto& handler : server_with_friends_.handlers) {
+    handler.ptr->NewCallData(cq, handler.idx);
+  }
+  new CallData(server_with_friends_.generic_service, cq);
+  void* tag;  // uniquely identifies a request.
+  bool ok;
+  // Block waiting to read the next event from the completion queue. The
+  // event is uniquely identified by its tag, which in this case is the
+  // memory address of a CallData instance.
+  // The return value of Next should always be checked. This return value
+  // tells us whether there is any kind of event or cq is shutting down.
+  while (cq->Next(&tag, &ok)) {
+    static_cast<CallDataBase*>(tag)->Proceed(ok);
+  }
+}
 
 Server::Server() = default;
 Server::Server(ServerWithFriends swf) : impl_(new Impl(std::move(swf))) {}
