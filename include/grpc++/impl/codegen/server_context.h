@@ -241,7 +241,10 @@ class ServerContext {
   /// Applications never need to call this method.
   grpc_call* c_call() { return call_; }
 
-  void SetHTML() { initial_metadata_flags_ |= GRPC_INITIAL_METADATA_HTML; }
+  void SetContentType(grpc::string content_type) {
+    initial_metadata_flags_ |= GRPC_INITIAL_METADATA_NO_CONTENT_TYPE;
+    initial_metadata_.emplace("content-type", std::move(content_type));
+  }
 
  private:
   friend class ::grpc::testing::InteropServerContextInspector;

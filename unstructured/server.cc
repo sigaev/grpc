@@ -45,7 +45,7 @@ class CallData final : public CallDataBase {
       case CallStatus::PROCESS: {
         new CallData(generic_service_, cq_);
 
-        ctx_.SetHTML();
+        ctx_.SetContentType("text/html; charset=UTF-8");
 
         static std::atomic<int> count(0);
         static constexpr int kSize = 1024;
