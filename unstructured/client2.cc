@@ -21,9 +21,9 @@ using grpc::ClientAsyncResponseReader;
 using grpc::ClientContext;
 using grpc::CompletionQueue;
 using grpc::Status;
-using grpc::unstructured::UnstructuredRequest;
-using grpc::unstructured::UnstructuredReply;
-using grpc::unstructured::Unstructured;
+using grpc::sync_over_async::UnstructuredRequest;
+using grpc::sync_over_async::UnstructuredReply;
+using grpc::sync_over_async::Unstructured;
 
 std::atomic<uint64_t> g_num_total(0);
 std::atomic<int> g_max_num_pending(105);

@@ -11,7 +11,7 @@
 #include "utils.h"
 
 namespace grpc {
-namespace unstructured {
+namespace sync_over_async {
 
 class TestService final : public Test::Service {
  public:
@@ -71,7 +71,7 @@ class CallData final : public CallDataBase {
   int count_ = 1;
 };
 
-}  // namespace unstructured
+}  // namespace sync_over_async
 }  // namespace grpc
 
 static constexpr bool kAsync = true;
@@ -86,19 +86,19 @@ int main() {
     if (kGeneric) {
       SyncOverAsyncPlugin::SetGenericCallDataFactory(
           [] (AsyncGenericService* generic_service, ServerCompletionQueue* cq) {
-            new grpc::unstructured::CallData(generic_service, cq);
+            new sync_over_async::CallData(generic_service, cq);
           });
     }
   }
 
   SslServerCredentialsOptions ssco;
   ssco.pem_root_certs =
-      ::unstructured::ReadFile("unstructured/keys/root-cert.pem");
+      unstructured::ReadFile("unstructured/keys/root-cert.pem");
   ssco.pem_key_cert_pairs.push_back(
-      {::unstructured::ReadFile("unstructured/keys/a-key.pem"),
-       ::unstructured::ReadFile("unstructured/keys/a-cert.pem")});
-  grpc::unstructured::TestService test_service;
-  grpc::unstructured::UnstructuredService unstructured_service;
+      {unstructured::ReadFile("unstructured/keys/a-key.pem"),
+       unstructured::ReadFile("unstructured/keys/a-cert.pem")});
+  sync_over_async::TestService test_service;
+  sync_over_async::UnstructuredService unstructured_service;
   AsyncGenericService ags;
   ServerBuilder builder;
   builder.AddListeningPort("0.0.0.0:50051", SslServerCredentials(ssco))

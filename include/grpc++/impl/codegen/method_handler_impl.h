@@ -89,7 +89,7 @@ class RpcMethodHandler : public MethodHandler {
   ServiceType* service_;
 };
 
-namespace unstructured {
+namespace sync_over_async {
 
 class CallDataBase {
  public:
@@ -97,11 +97,11 @@ class CallDataBase {
   virtual void Proceed(bool ok) = 0;
 };
 
-}  // namespace unstructured
+}  // namespace sync_over_async
 
 template <class ServiceType, class RequestType, class ResponseType>
 class RpcMethodHandler<ServiceType, RequestType, ResponseType>::CallData final
-    : public unstructured::CallDataBase {
+    : public sync_over_async::CallDataBase {
  public:
   CallData(RpcMethodHandler* handler, size_t idx, ServerCompletionQueue* cq)
       : handler_(handler), idx_(idx), cq_(cq) {

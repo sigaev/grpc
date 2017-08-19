@@ -10,17 +10,17 @@
 class UnstructuredClient {
  public:
   UnstructuredClient(std::shared_ptr<grpc::Channel> channel)
-      : stub_(grpc::unstructured::Test::NewStub(channel)) {}
+      : stub_(grpc::sync_over_async::Test::NewStub(channel)) {}
 
   // Assembles the client's payload, sends it and presents the response back
   // from the server.
   int Process(const std::string& user) {
     // Data we are sending to the server.
-    grpc::unstructured::TestRequest request;
+    grpc::sync_over_async::TestRequest request;
     request.set_input(13);
 
     // Container for the data we expect from the server.
-    grpc::unstructured::TestReply reply;
+    grpc::sync_over_async::TestReply reply;
 
     // Context for the client. It could be used to convey extra information to
     // the server and/or tweak certain RPC behaviors.
@@ -40,7 +40,7 @@ class UnstructuredClient {
   }
 
  private:
-  std::unique_ptr<grpc::unstructured::Test::Stub> stub_;
+  std::unique_ptr<grpc::sync_over_async::Test::Stub> stub_;
 };
 
 int main(int argc, char** argv) {

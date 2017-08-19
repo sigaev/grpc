@@ -392,7 +392,7 @@ class Server::SyncOverAsyncState::Impl {
     // The return value of Next should always be checked. This return value
     // tells us whether there is any kind of event or cq_ is shutting down.
     while (cq_->Next(&tag, &ok)) {
-      static_cast<unstructured::CallDataBase*>(tag)->Proceed(ok);
+      static_cast<sync_over_async::CallDataBase*>(tag)->Proceed(ok);
     }
   }
 
