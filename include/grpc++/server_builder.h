@@ -241,6 +241,18 @@ class ServerBuilder {
     Service* service;
   };
 
+  struct SyncOverAsync {
+    SyncOverAsync(
+        const std::vector<std::unique_ptr<NamedService>>& services,
+        std::function<void(AsyncGenericService*, ServerCompletionQueue*)>
+            generic_call_data_factory);
+
+    std::vector<std::function<void(ServerCompletionQueue*)>>
+        call_data_factories;
+    std::function<void(AsyncGenericService*, ServerCompletionQueue*)>
+        generic_call_data_factory;
+  };
+
   int max_receive_message_size_;
   int max_send_message_size_;
   std::vector<std::unique_ptr<ServerBuilderOption>> options_;
@@ -256,15 +268,6 @@ class ServerBuilder {
   std::vector<std::unique_ptr<ServerBuilderPlugin>> plugins_;
   grpc_resource_quota* resource_quota_;
   AsyncGenericService* generic_service_;
-  // Initialized by the sync-over-async plugin.
-  struct SyncOverAsync {
-    std::vector<std::function<void(ServerCompletionQueue*)>> call_data_newers;
-    std::function<void(AsyncGenericService*, ServerCompletionQueue*)>
-        generic_call_data_newer;
-    bool enabled = false;
-
-    void HarvestCallDataNewers(Service* service);
-  } sync_over_async_;
   struct {
     bool is_set;
     grpc_compression_level level;
@@ -274,6 +277,8 @@ class ServerBuilder {
     grpc_compression_algorithm algorithm;
   } maybe_default_compression_algorithm_;
   uint32_t enabled_compression_algorithms_bitset_;
+  // Initialized by the sync-over-async plugin.
+  std::unique_ptr<SyncOverAsync> sync_over_async_;
 };
 
 }  // namespace grpc

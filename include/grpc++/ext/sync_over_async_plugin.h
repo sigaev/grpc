@@ -19,9 +19,9 @@ class SyncOverAsyncPlugin : public ServerBuilderPlugin {
   void UpdateChannelArguments(ChannelArguments* args) override {}
   grpc::string name() override { return "sync_over_async"; }
 
-  static void SetGenericCallDataNewer(
+  static void SetGenericCallDataFactory(
       const std::function<void(AsyncGenericService*, ServerCompletionQueue*)>&
-          generic_call_data_newer);
+          generic_call_data_factory);
 };
 
 }  // namespace grpc

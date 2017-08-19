@@ -233,11 +233,14 @@ class Server final : public ServerInterface, private GrpcLibraryCodegen {
   std::unique_ptr<HealthCheckServiceInterface> health_check_service_;
   bool health_check_service_disabled_;
 
-  struct SyncOverAsyncState {
-    class Impl;
-    std::unique_ptr<Impl> impl;
-    void Start(std::vector<std::function<void()>> call_data_newers,
+  class SyncOverAsyncState {
+   public:
+    void Start(std::vector<std::function<void()>> call_data_factories,
                ServerCompletionQueue* cq);
+
+   private:
+    class Impl;
+    std::unique_ptr<Impl> impl_;
   } sync_over_async_state_;
 };
 

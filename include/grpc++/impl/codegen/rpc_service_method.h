@@ -66,7 +66,7 @@ class MethodHandler {
     grpc_byte_buffer* request;
   };
   virtual void RunHandler(const HandlerParameter& param) = 0;
-  virtual void NewCallData(ServerCompletionQueue* cq, size_t idx) {}
+  virtual void NewCallData(size_t idx, ServerCompletionQueue* cq) {}
 };
 
 /// Server side rpc method class

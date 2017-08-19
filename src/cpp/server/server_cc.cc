@@ -366,10 +366,10 @@ class Server::SyncRequestThreadManager : public ThreadManager {
 
 class Server::SyncOverAsyncState::Impl {
  public:
-  Impl(std::vector<std::function<void()>> call_data_newers,
+  Impl(std::vector<std::function<void()>> call_data_factories,
        ServerCompletionQueue* cq)
-      : call_data_newers_(std::move(call_data_newers)), cq_(cq) {
-    GPR_ASSERT(call_data_newers_.size() != 0);
+      : call_data_factories_(std::move(call_data_factories)), cq_(cq) {
+    GPR_ASSERT(call_data_factories_.size() != 0);
     GPR_ASSERT(cq_ != nullptr);
     handle_rpcs_thread_ = std::thread([this] { HandleRpcs(); });
   }
@@ -383,7 +383,7 @@ class Server::SyncOverAsyncState::Impl {
   void HandleRpcs() {
     gpr_log(GPR_ERROR, "Handling RPCs");
     // Spawn a new CallData instance to serve new clients.
-    for (auto& call_data_newer : call_data_newers_) call_data_newer();
+    for (auto& call_data_factory : call_data_factories_) call_data_factory();
     void* tag;  // uniquely identifies a request.
     bool ok;
     // Block waiting to read the next event from the completion queue. The
@@ -396,16 +396,16 @@ class Server::SyncOverAsyncState::Impl {
     }
   }
 
-  const std::vector<std::function<void()>> call_data_newers_;
+  const std::vector<std::function<void()>> call_data_factories_;
   ServerCompletionQueue* const cq_;
   std::thread handle_rpcs_thread_;
 };
 
 void Server::SyncOverAsyncState::Start(
-    std::vector<std::function<void()>> call_data_newers,
+    std::vector<std::function<void()>> call_data_factories,
     ServerCompletionQueue* cq) {
-  GPR_ASSERT(impl == nullptr);
-  impl.reset(new Impl(std::move(call_data_newers), cq));
+  GPR_ASSERT(impl_ == nullptr);
+  impl_.reset(new Impl(std::move(call_data_factories), cq));
 }
 
 static internal::GrpcLibraryInitializer g_gli_initializer;
