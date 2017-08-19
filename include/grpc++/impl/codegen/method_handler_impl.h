@@ -115,32 +115,23 @@ class RpcMethodHandler<ServiceType, RequestType, ResponseType>::CallData final
   }
 
   void Proceed(bool ok) override {
-    if (!ok) status_ = CallStatus::FINISH;
-
-    switch (status_) {
-      case CallStatus::PROCESS: {
-        // Spawn a new CallData instance to serve new clients while we process
-        // the one for this CallData. The instance will deallocate itself as
-        // part of its FINISH state.
-        new CallData(handler_, idx_, cq_);
-
-        // The actual processing.
-        Status status =
-            handler_->func_(handler_->service_, &ctx_, &request_, &reply_);
-
-        // And we are done! Let the gRPC runtime know we've finished, using
-        // the memory address of this instance as the uniquely identifying tag
-        // for the event.
-        responder_.Finish(reply_, status, this);
-        status_ = CallStatus::FINISH;
-        break;
-      }
-      case CallStatus::FINISH: {
-        // Once in the FINISH state, deallocate ourselves (CallData).
-        delete this;
-        break;
-      }
+    if ((count_ *= ok)-- == 0) {
+      delete this;
+      return;
     }
+    // Spawn a new CallData instance to serve new clients while we process
+    // the one for this CallData. The instance will deallocate itself when
+    // count_ reaches 0.
+    new CallData(handler_, idx_, cq_);
+
+    // The actual processing.
+    Status status =
+        handler_->func_(handler_->service_, &ctx_, &request_, &reply_);
+
+    // And we are done! Let the gRPC runtime know we've finished, using
+    // the memory address of this instance as the uniquely identifying tag
+    // for the event.
+    responder_.Finish(reply_, status, this);
   }
 
  private:
@@ -155,8 +146,7 @@ class RpcMethodHandler<ServiceType, RequestType, ResponseType>::CallData final
   RequestType request_;
   ResponseType reply_;
   ServerAsyncResponseWriter<ResponseType> responder_{&ctx_};
-  enum class CallStatus { PROCESS, FINISH };
-  CallStatus status_{CallStatus::PROCESS};
+  int count_ = 1;  // How many times Proceed is normally called, minus one.
 };
 
 template <class ServiceType, class RequestType, class ResponseType>

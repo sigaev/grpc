@@ -39,36 +39,28 @@ class CallData final : public CallDataBase {
   }
 
   void Proceed(bool ok) override {
-    if (!ok) status_ = CallStatus::FINISH;
+    if ((count_ *= ok)-- == 0) {
+      delete this;
+      return;
+    }
+    new CallData(generic_service_, cq_);
 
-    switch (status_) {
-      case CallStatus::PROCESS: {
-        new CallData(generic_service_, cq_);
-
-        ctx_.SetContentType("text/html; charset=UTF-8");
-
-        static std::atomic<int> count(0);
-        static constexpr int kSize = 1024;
-        std::unique_ptr<char[]> chars(new char[kSize]);
-        const size_t len = std::max(0, std::min(kSize - 1,
-            snprintf(chars.get(), kSize,
+    ctx_.SetContentType("text/html; charset=UTF-8");
+    static std::atomic<int> count(0);
+    static constexpr int kSize = 1024;
+    std::unique_ptr<char[]> chars(new char[kSize]);
+    const size_t len = std::max(0, std::min(
+        kSize - 1,
+        snprintf(chars.get(), kSize,
 "<html><head><link rel=icon href=\"data:image/png;base64,"
 "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAA"
 "AABJRU5ErkJggg==\"></head>"
 "<body>This <b>is</b> Навуходоносор Второй. 小米科技. Method: %s. Count: %d.</body></html>",
-                     ctx_.method().c_str(), count++)));
-        Slice s(SliceFromCharArray(std::move(chars), len), Slice::STEAL_REF);
+                 ctx_.method().c_str(), count++)));
 
-        stream_.WriteAndFinish(ByteBuffer(&s, 1), WriteOptions().set_raw(),
-                               Status::OK, this);
-        status_ = CallStatus::FINISH;
-        break;
-      }
-      case CallStatus::FINISH: {
-        delete this;
-        break;
-      }
-    }
+    Slice s(SliceFromCharArray(std::move(chars), len), Slice::STEAL_REF);
+    stream_.WriteAndFinish(ByteBuffer(&s, 1), WriteOptions().set_raw(),
+                           Status::OK, this);
   }
 
  private:
@@ -76,8 +68,7 @@ class CallData final : public CallDataBase {
   ServerCompletionQueue* const cq_;
   GenericServerContext ctx_;
   GenericServerAsyncReaderWriter stream_{&ctx_};
-  enum class CallStatus { PROCESS, FINISH };
-  CallStatus status_{CallStatus::PROCESS};
+  int count_ = 1;
 };
 
 }  // namespace unstructured
