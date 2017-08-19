@@ -76,6 +76,7 @@ class CallData final : public CallDataBase {
 
 static constexpr bool kAsync = true;
 static constexpr bool kGeneric = true;
+static_assert(kAsync || !kGeneric, "Generic requires async");
 
 int main() {
   using namespace grpc;
@@ -83,12 +84,12 @@ int main() {
     ServerBuilder::InternalAddPluginFactory([] {
       return std::unique_ptr<ServerBuilderPlugin>(new SyncOverAsyncPlugin);
     });
-    if (kGeneric) {
-      SyncOverAsyncPlugin::SetGenericCallDataFactory(
-          [] (AsyncGenericService* generic_service, ServerCompletionQueue* cq) {
-            new sync_over_async::CallData(generic_service, cq);
-          });
-    }
+  }
+  if (kGeneric) {
+    SyncOverAsyncPlugin::SetGenericCallDataFactory(
+        [] (AsyncGenericService* generic_service, ServerCompletionQueue* cq) {
+          new sync_over_async::CallData(generic_service, cq);
+        });
   }
 
   SslServerCredentialsOptions ssco;
@@ -104,7 +105,7 @@ int main() {
   builder.AddListeningPort("0.0.0.0:50051", SslServerCredentials(ssco))
          .RegisterService(&test_service)
          .RegisterService(&unstructured_service);
-  if (kAsync && kGeneric) builder.RegisterAsyncGenericService(&ags);
+  if (kGeneric) builder.RegisterAsyncGenericService(&ags);
   std::unique_ptr<ServerCompletionQueue> cq;
   if (kAsync) cq = builder.AddCompletionQueue();
   auto server = builder.BuildAndStart();
