@@ -35,6 +35,7 @@
 #define GRPCXX_SERVER_H
 
 #include <condition_variable>
+#include <functional>
 #include <list>
 #include <memory>
 #include <mutex>
@@ -231,6 +232,13 @@ class Server final : public ServerInterface, private GrpcLibraryCodegen {
 
   std::unique_ptr<HealthCheckServiceInterface> health_check_service_;
   bool health_check_service_disabled_;
+
+  struct SyncOverAsyncState {
+    class Impl;
+    std::unique_ptr<Impl> impl;
+    void Start(std::vector<std::function<void()>> call_data_newers,
+               ServerCompletionQueue* cq);
+  } sync_over_async_state_;
 };
 
 }  // namespace grpc

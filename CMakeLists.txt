@@ -3027,6 +3027,47 @@ if (gRPC_INSTALL)
   )
 endif()
 
+add_library(grpc++_sync_over_async
+  src/cpp/ext/sync_over_async_plugin.cc
+)
+
+if(WIN32 AND MSVC)
+  set_target_properties(grpc++_sync_over_async PROPERTIES COMPILE_PDB_NAME "grpc++_sync_over_async"
+    COMPILE_PDB_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+  )
+  if (gRPC_INSTALL)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/grpc++_sync_over_async.pdb
+      DESTINATION ${CMAKE_INSTALL_LIBDIR} OPTIONAL
+    )
+  endif()
+endif()
+
+target_include_directories(grpc++_sync_over_async
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(grpc++_sync_over_async
+  grpc++
+)
+
+foreach(_hdr
+  include/grpc++/ext/sync_over_async_plugin.h
+)
+  string(REPLACE "include/" "" _path ${_hdr})
+  get_filename_component(_path ${_path} PATH)
+  install(FILES ${_hdr}
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${_path}"
+  )
+endforeach()
+
+if (gRPC_INSTALL)
+  install(TARGETS grpc++_sync_over_async EXPORT gRPCTargets
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  )
+endif()
+
 if (gRPC_BUILD_TESTS)
 
 add_library(grpc++_test_config
@@ -3596,10 +3637,6 @@ add_library(grpc++_unstructured_proto
   ${_gRPC_PROTO_GENS_DIR}/unstructured/unstructured.grpc.pb.h
 )
 
-add_library(grpc++_unstructured
-  unstructured/unstructured.cc
-)
-
 add_executable(server
   unstructured/server.cc
 )
@@ -3617,12 +3654,6 @@ add_executable(client2
 )
 
 target_include_directories(grpc++_unstructured_proto
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
-  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/protobuf/src
-  PRIVATE ${_gRPC_PROTO_GENS_DIR}
-)
-
-target_include_directories(grpc++_unstructured
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/third_party/protobuf/src
   PRIVATE ${_gRPC_PROTO_GENS_DIR}
@@ -3656,14 +3687,9 @@ target_link_libraries(grpc++_unstructured_proto
   grpc++
 )
 
-target_link_libraries(grpc++_unstructured
-  grpc++
-  grpc++_unstructured_proto
-)
-
 target_link_libraries(server
   grpc++
-  grpc++_unstructured
+  grpc++_sync_over_async
   grpc++_unstructured_proto
 )
 

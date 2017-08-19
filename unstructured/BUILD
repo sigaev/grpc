@@ -6,12 +6,6 @@ grpc_proto_library(
 )
 
 cc_library(
-    name = "unstructured",
-    srcs = ["unstructured.cc"],
-    deps = [":unstructured_proto"],
-)
-
-cc_library(
     name = "utils",
     hdrs = ["utils.h"],
 )
@@ -44,7 +38,8 @@ cc_binary(
     name = "server",
     srcs = ["server.cc"],
     deps = [
-        ":unstructured",
+        "//:grpc++_sync_over_async",
+        ":unstructured_proto",
         ":utils",
     ],
 )

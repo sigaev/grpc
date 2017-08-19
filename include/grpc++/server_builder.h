@@ -35,6 +35,7 @@
 #define GRPCXX_SERVER_BUILDER_H
 
 #include <climits>
+#include <functional>
 #include <map>
 #include <memory>
 #include <vector>
@@ -201,6 +202,7 @@ class ServerBuilder {
 
  private:
   friend class ::grpc::testing::ServerBuilderPluginTest;
+  friend class SyncOverAsyncPlugin;
 
   struct Port {
     grpc::string addr;
@@ -254,6 +256,15 @@ class ServerBuilder {
   std::vector<std::unique_ptr<ServerBuilderPlugin>> plugins_;
   grpc_resource_quota* resource_quota_;
   AsyncGenericService* generic_service_;
+  // Initialized by the sync-over-async plugin.
+  struct SyncOverAsync {
+    std::vector<std::function<void(ServerCompletionQueue*)>> call_data_newers;
+    std::function<void(AsyncGenericService*, ServerCompletionQueue*)>
+        generic_call_data_newer;
+    bool enabled = false;
+
+    void HarvestCallDataNewers(Service* service);
+  } sync_over_async_;
   struct {
     bool is_set;
     grpc_compression_level level;

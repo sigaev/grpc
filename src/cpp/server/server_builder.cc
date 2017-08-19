@@ -44,6 +44,20 @@
 
 namespace grpc {
 
+void ServerBuilder::SyncOverAsync::HarvestCallDataNewers(Service* service) {
+  GPR_ASSERT(enabled);
+  const auto& methods = service->methods();
+  for (size_t idx = 0; idx < methods.size(); ++idx) {
+    std::shared_ptr<MethodHandler> ptr(
+        methods[idx]->ReleaseHandler().release());
+    if (ptr != nullptr) {
+      call_data_newers.emplace_back([ptr, idx] (ServerCompletionQueue* cq) {
+          ptr->NewCallData(cq, idx);
+      });
+    }
+  }
+}
+
 static std::vector<std::unique_ptr<ServerBuilderPlugin> (*)()>*
     g_plugin_factory_list;
 static gpr_once once_init_plugin_list = GPR_ONCE_INIT;
@@ -348,6 +362,27 @@ std::unique_ptr<Server> ServerBuilder::BuildAndStart() {
 
   auto cqs_data = cqs_.empty() ? nullptr : &cqs_[0];
   server->Start(cqs_data, cqs_.size());
+
+  if (sync_over_async_.enabled) {
+    GPR_ASSERT(!has_sync_methods);
+    GPR_ASSERT(sync_server_cqs->size() == 0);
+    GPR_ASSERT(cqs_.size() == 1);
+    auto* cq = cqs_[0];
+
+    std::vector<std::function<void()>> call_data_newers;
+    for (auto& call_data_newer : sync_over_async_.call_data_newers) {
+      call_data_newers.emplace_back(std::bind(std::move(call_data_newer), cq));
+    }
+    if (generic_service_ != nullptr &&
+            sync_over_async_.generic_call_data_newer != nullptr) {
+      call_data_newers.emplace_back(std::bind(
+          std::move(sync_over_async_.generic_call_data_newer),
+          generic_service_,
+          cq));
+    }
+
+    server->sync_over_async_state_.Start(std::move(call_data_newers), cq);
+  }
 
   for (auto plugin = plugins_.begin(); plugin != plugins_.end(); plugin++) {
     (*plugin)->Finish(initializer);

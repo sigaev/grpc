@@ -1399,7 +1399,6 @@ GRPCXX_PUBLIC_HDRS = [
     "include/grpc++/support/stub_options.h",
     "include/grpc++/support/sync_stream.h",
     "include/grpc++/support/time.h",
-    "include/grpc++/unstructured.h",
 ]
 
 grpc_cc_library(
@@ -1516,6 +1515,14 @@ grpc_cc_library(
         ":grpc++",
         "//src/proto/grpc/reflection/v1alpha:reflection_proto",
     ],
+)
+
+grpc_cc_library(
+    name = "grpc++_sync_over_async",
+    srcs = ["src/cpp/ext/sync_over_async_plugin.cc"],
+    language = "c++",
+    public_hdrs = ["include/grpc++/ext/sync_over_async_plugin.h"],
+    deps = [":grpc++"],
 )
 
 grpc_cc_library(
