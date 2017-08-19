@@ -10,8 +10,13 @@ namespace grpc {
 class AsyncGenericService;
 class ServerCompletionQueue;
 
-class SyncOverAsyncPlugin : public ServerBuilderPlugin {
+class SyncOverAsyncPlugin final : public ServerBuilderPlugin {
  public:
+  explicit SyncOverAsyncPlugin(
+      std::function<void(AsyncGenericService*, ServerCompletionQueue*)>
+          generic_call_data_factory = nullptr);
+
+ private:
   void UpdateServerBuilder(ServerBuilder* builder) override;
   void InitServer(ServerInitializer* si) override {}
   void Finish(ServerInitializer* si) override {}
@@ -19,9 +24,8 @@ class SyncOverAsyncPlugin : public ServerBuilderPlugin {
   void UpdateChannelArguments(ChannelArguments* args) override {}
   grpc::string name() override { return "sync_over_async"; }
 
-  static void SetGenericCallDataFactory(
-      const std::function<void(AsyncGenericService*, ServerCompletionQueue*)>&
-          generic_call_data_factory);
+  const std::function<void(AsyncGenericService*, ServerCompletionQueue*)>
+      generic_call_data_factory_;
 };
 
 }  // namespace grpc

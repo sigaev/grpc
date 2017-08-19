@@ -82,14 +82,15 @@ int main() {
   using namespace grpc;
   if (kAsync) {
     ServerBuilder::InternalAddPluginFactory([] {
-      return std::unique_ptr<ServerBuilderPlugin>(new SyncOverAsyncPlugin);
-    });
-  }
-  if (kGeneric) {
-    SyncOverAsyncPlugin::SetGenericCallDataFactory(
-        [] (AsyncGenericService* generic_service, ServerCompletionQueue* cq) {
+      std::function<void(AsyncGenericService*, ServerCompletionQueue*)> factory;
+      if (kGeneric) {
+        factory = [] (AsyncGenericService* generic_service, ServerCompletionQueue* cq) {
           new sync_over_async::CallData(generic_service, cq);
-        });
+        };
+      }
+      return std::unique_ptr<ServerBuilderPlugin>(
+          new SyncOverAsyncPlugin(std::move(factory)));
+    });
   }
 
   SslServerCredentialsOptions ssco;
