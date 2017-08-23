@@ -146,9 +146,9 @@ static grpc_error *server_filter_incoming_metadata(grpc_exec_ctx *exec_ctx,
   bool browser = false;
   if (b->idx.named.user_agent != NULL) {
     grpc_slice user_agent_slice = GRPC_MDVALUE(b->idx.named.user_agent->md);
-    browser = (grpc_slice_slice(
-                   user_agent_slice,
-                   grpc_slice_from_static_string("Mozilla")) != -1);
+    browser =
+        (grpc_slice_slice(user_agent_slice,
+                          grpc_slice_from_static_string("Mozilla")) != -1);
   }
 
   if (b->idx.named.te != NULL) {
@@ -337,13 +337,13 @@ static void hs_mutate_op(grpc_exec_ctx *exec_ctx, grpc_call_element *elem,
             exec_ctx, op->payload->send_initial_metadata.send_initial_metadata,
             &calld->status, GRPC_MDELEM_STATUS_200));
     if ((op->payload->send_initial_metadata.send_initial_metadata_flags &
-            GRPC_INITIAL_METADATA_NO_CONTENT_TYPE) == 0) {
-      add_error(
-          error_name, &error,
-          grpc_metadata_batch_add_tail(
-              exec_ctx, op->payload->send_initial_metadata.send_initial_metadata,
-              &calld->content_type,
-              GRPC_MDELEM_CONTENT_TYPE_APPLICATION_SLASH_GRPC));
+         GRPC_INITIAL_METADATA_NO_CONTENT_TYPE) == 0) {
+      add_error(error_name, &error,
+                grpc_metadata_batch_add_tail(
+                    exec_ctx,
+                    op->payload->send_initial_metadata.send_initial_metadata,
+                    &calld->content_type,
+                    GRPC_MDELEM_CONTENT_TYPE_APPLICATION_SLASH_GRPC));
     }
     add_error(error_name, &error,
               server_filter_outgoing_metadata(

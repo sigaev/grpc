@@ -65,20 +65,15 @@ inline grpc_slice SliceFromCopiedString(const grpc::string& str) {
 inline grpc_slice SliceFromString(std::unique_ptr<grpc::string> str) {
   auto* s = str.release();
   return g_core_codegen_interface->grpc_slice_new_with_user_data(
-      &s->front(),
-      s->size(),
-      [] (void* s) { delete static_cast<grpc::string*>(s); },
-      s);
+      &s->front(), s->size(),
+      [](void* s) { delete static_cast<grpc::string*>(s); }, s);
 }
 
 inline grpc_slice SliceFromCharArray(std::unique_ptr<char[]> chars,
                                      size_t size) {
   auto* c = chars.release();
   return g_core_codegen_interface->grpc_slice_new_with_user_data(
-      c,
-      size,
-      [] (void* c) { delete[] static_cast<char*>(c); },
-      c);
+      c, size, [](void* c) { delete[] static_cast<char*>(c); }, c);
 }
 
 }  // namespace grpc

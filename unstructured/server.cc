@@ -49,14 +49,18 @@ class CallData final : public CallDataBase {
     static std::atomic<int> count(0);
     static constexpr int kSize = 1024;
     std::unique_ptr<char[]> chars(new char[kSize]);
-    const size_t len = std::max(0, std::min(
-        kSize - 1,
-        snprintf(chars.get(), kSize,
-"<html><head><link rel=icon href=\"data:image/png;base64,"
-"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAA"
-"AABJRU5ErkJggg==\"></head>"
-"<body>This <b>is</b> Навуходоносор Второй. 小米科技. Method: %s. Count: %d.</body></html>",
-                 ctx_.method().c_str(), count++)));
+    const size_t len = std::max(
+        0,
+        std::min(
+            kSize - 1,
+            snprintf(chars.get(), kSize,
+                     "<html><head><link rel=icon href=\"data:image/png;base64,"
+                     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4n"
+                     "GMAAQAABQABDQottAAA"
+                     "AABJRU5ErkJggg==\"></head>"
+                     "<body>This <b>is</b> Навуходоносор Второй. 小米科技. "
+                     "Method: %s. Count: %d.</body></html>",
+                     ctx_.method().c_str(), count++)));
 
     Slice s(SliceFromCharArray(std::move(chars), len), Slice::STEAL_REF);
     stream_.WriteAndFinish(ByteBuffer(&s, 1), WriteOptions().set_raw(),
@@ -84,7 +88,8 @@ int main() {
     ServerBuilder::InternalAddPluginFactory([] {
       std::function<void(AsyncGenericService*, ServerCompletionQueue*)> factory;
       if (kGeneric) {
-        factory = [] (AsyncGenericService* generic_service, ServerCompletionQueue* cq) {
+        factory = [](AsyncGenericService* generic_service,
+                     ServerCompletionQueue* cq) {
           new sync_over_async::CallData(generic_service, cq);
         };
       }
@@ -104,8 +109,8 @@ int main() {
   AsyncGenericService ags;
   ServerBuilder builder;
   builder.AddListeningPort("0.0.0.0:50051", SslServerCredentials(ssco))
-         .RegisterService(&test_service)
-         .RegisterService(&unstructured_service);
+      .RegisterService(&test_service)
+      .RegisterService(&unstructured_service);
   if (kGeneric) builder.RegisterAsyncGenericService(&ags);
   std::unique_ptr<ServerCompletionQueue> cq;
   if (kAsync) cq = builder.AddCompletionQueue();

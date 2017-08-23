@@ -4,8 +4,8 @@
 
 #include <grpc++/grpc++.h>
 
-#include "utils.h"
 #include "unstructured/unstructured.grpc.pb.h"
+#include "utils.h"
 
 class UnstructuredClient {
  public:
@@ -51,8 +51,7 @@ int main(int argc, char** argv) {
   UnstructuredClient uc(grpc::CreateChannel(
       "localhost:50051",
       grpc::SslCredentials(
-          {unstructured::ReadFile("unstructured/keys/root-cert.pem"),
-           "",
+          {unstructured::ReadFile("unstructured/keys/root-cert.pem"), "",
            ""})));
   std::string user("world");
   auto reply = uc.Process(user);

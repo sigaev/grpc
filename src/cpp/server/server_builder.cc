@@ -373,7 +373,7 @@ std::unique_ptr<Server> ServerBuilder::BuildAndStart() {
     GPR_ASSERT(sync_server_cqs->size() == 0);
     GPR_ASSERT(cqs_.size() == 1);
     GPR_ASSERT((generic_service_ != nullptr) ==
-                   (sync_over_async_->generic_call_data_factory != nullptr));
+               (sync_over_async_->generic_call_data_factory != nullptr));
     auto* cq = cqs_[0];
 
     std::vector<std::function<void()>> call_data_factories;
@@ -382,10 +382,9 @@ std::unique_ptr<Server> ServerBuilder::BuildAndStart() {
           std::bind(std::move(call_data_factory), cq));
     }
     if (generic_service_ != nullptr) {
-      call_data_factories.emplace_back(std::bind(
-          std::move(sync_over_async_->generic_call_data_factory),
-          generic_service_,
-          cq));
+      call_data_factories.emplace_back(
+          std::bind(std::move(sync_over_async_->generic_call_data_factory),
+                    generic_service_, cq));
     }
 
     sync_over_async_.reset();

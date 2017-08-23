@@ -358,9 +358,8 @@ typedef enum grpc_call_error {
 #define GRPC_WRITE_NO_COMPRESS (0x00000002u)
 #define GRPC_WRITE_RAW (0x00000008u)
 /** Mask of all valid flags. */
-#define GRPC_WRITE_USED_MASK (GRPC_WRITE_BUFFER_HINT | \
-                              GRPC_WRITE_NO_COMPRESS | \
-                              GRPC_WRITE_RAW)
+#define GRPC_WRITE_USED_MASK \
+  (GRPC_WRITE_BUFFER_HINT | GRPC_WRITE_NO_COMPRESS | GRPC_WRITE_RAW)
 
 /** Initial metadata flags */
 /** Signal that the call is idempotent */
@@ -382,8 +381,7 @@ typedef enum grpc_call_error {
    GRPC_INITIAL_METADATA_WAIT_FOR_READY |                \
    GRPC_INITIAL_METADATA_CACHEABLE_REQUEST |             \
    GRPC_INITIAL_METADATA_WAIT_FOR_READY_EXPLICITLY_SET | \
-   GRPC_INITIAL_METADATA_CORKED |                        \
-   GRPC_INITIAL_METADATA_NO_CONTENT_TYPE)
+   GRPC_INITIAL_METADATA_CORKED | GRPC_INITIAL_METADATA_NO_CONTENT_TYPE)
 
 /** A single metadata element */
 typedef struct grpc_metadata {

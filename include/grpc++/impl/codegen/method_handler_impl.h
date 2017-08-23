@@ -110,8 +110,8 @@ class RpcMethodHandler<ServiceType, RequestType, ResponseType>::CallData final
     // uniquely identifying the request (so that different CallData instances
     // can serve different requests concurrently), in this case the memory
     // address of this CallData instance.
-    handler_->service_->RequestAsyncUnary(
-        idx_, &ctx_, &request_, &responder_, cq_, cq_, this);
+    handler_->service_->RequestAsyncUnary(idx_, &ctx_, &request_, &responder_,
+                                          cq_, cq_, this);
   }
 
   void Proceed(bool ok) override {

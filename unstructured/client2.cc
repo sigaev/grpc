@@ -5,10 +5,10 @@
 
 #include <grpc++/grpc++.h>
 #include <grpc/support/log.h>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
 #include <time.h>
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 #if _WINDOWS
 #include <windows.h>
 #endif
@@ -56,9 +56,7 @@ class UnstructuredClient {
     // store in "call". Because we are using the asynchronous API, we need to
     // hold on to the "call" instance in order to get updates on the ongoing
     // RPC.
-    call->response_reader =
-        stub_->AsyncProcess(&call->context, request, &cq_);
-
+    call->response_reader = stub_->AsyncProcess(&call->context, request, &cq_);
 
     // Request that, upon completion of the RPC, "reply" be updated with the
     // server's response; "status" with the indication of whether the operation
@@ -108,7 +106,8 @@ class UnstructuredClient {
     // Storage for the status of the RPC upon completion.
     Status status;
 
-    std::unique_ptr<ClientAsyncResponseReader<UnstructuredReply>> response_reader;
+    std::unique_ptr<ClientAsyncResponseReader<UnstructuredReply>>
+        response_reader;
   };
 
   // Out of the passed in Channel comes the stub, stored here, our view of the
@@ -132,13 +131,12 @@ int main() {
     UnstructuredClient uc(grpc::CreateChannel(
         "localhost:50051",
         grpc::SslCredentials(
-            {unstructured::ReadFile("unstructured/keys/root-cert.pem"),
-             "",
+            {unstructured::ReadFile("unstructured/keys/root-cert.pem"), "",
              ""})));
 
     // Spawn reader thread that loops indefinitely
     std::thread t(&UnstructuredClient::AsyncCompleteRpc, &uc);
-    for (unsigned i = 0; ; ++i) {
+    for (unsigned i = 0;; ++i) {
       std::string user("world " + std::to_string(i));
       uc.Process(user);  // The actual RPC call!
     }
