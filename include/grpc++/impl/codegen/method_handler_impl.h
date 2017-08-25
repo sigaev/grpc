@@ -38,6 +38,7 @@
 #include <grpc++/impl/codegen/core_codegen_interface.h>
 #include <grpc++/impl/codegen/rpc_service_method.h>
 #include <grpc++/impl/codegen/sync_stream.h>
+#include <grpc/support/log.h>
 
 namespace grpc {
 
@@ -96,6 +97,15 @@ class CallDataBase {
   virtual ~CallDataBase() {}
   virtual void Proceed(bool ok) = 0;
 };
+
+inline int64_t Now() {
+  timespec ts;
+  if (clock_gettime(CLOCK_REALTIME, &ts) != 0) {
+    gpr_log(GPR_ERROR, "clock_gettime failed: %s", strerror(errno));
+    return 0;
+  }
+  return ts.tv_sec * static_cast<int64_t>(1000000000) + ts.tv_nsec;
+}
 
 }  // namespace sync_over_async
 
