@@ -53,6 +53,11 @@ class Fan final {
     shutdown_ = true;
   }
 
+  size_t num_calls() const {
+    std::lock_guard<std::mutex> lg(mu_);
+    return calls_.size();
+  }
+
  private:
   std::deque<CallData*> calls_;
   bool shutdown_ = false;
@@ -91,11 +96,13 @@ class CallData final : public CallDataBase {
         ctx_.SetContentType("text/html; charset=UTF-8");
       }
       GPR_ASSERT(creation_time_ == 0);
-      creation_time_ = Now();
+      GPR_ASSERT(publish_time_ == 0);
+      creation_time_ = publish_time_ = Now();
     }
     if (fan_->IsShutdown()) count_ = 0;
     if ((count_ & 1) != 0) {
       fan_->Add(this);
+      dead_delta_ = Now() - publish_time_;
     } else {
       static constexpr int kSize = 1024;
       if (slices_[0].size() == 0) {
@@ -112,12 +119,20 @@ class CallData final : public CallDataBase {
                     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4n"
                     "GMAAQAABQABDQottAAAAABJRU5ErkJggg==\"></head>"
                     "<body>This <b>is</b> Навуходоносор Второй. 小米科技.<br>"
-                    "Server stream:<pre id=stream>&nbsp;</pre><script>"
-                    "var elem = document.getElementById('stream');"
+                    "Server stream:<pre>letter  msg# #calls    elapsed "
+                    "pub-to-write dead-after-pub</pre><pre "
+                    "id=stream>&nbsp;</pre>Missed messages: <span "
+                    "id=missed>&nbsp;</span>. <script>"
+                    "var elem0 = document.getElementById('stream');"
+                    "var elem1 = document.getElementById('missed');"
                     "var src = new EventSource('/stream');"
+                    "var count = -1; var missed = 0;"
                     "src.onmessage = "
-                    "function(event) { elem.textContent = event.data; }"
-                    "</script>Method: %s. Count: %d. Publish time, latency: ",
+                    "function(event) { elem0.textContent = event.data; var c = "
+                    "parseInt(event.data.substring(1, 12)); if (count != -1) "
+                    "missed += Math.abs(c - 1 - count); count = c; "
+                    "elem1.textContent = missed; }"
+                    "</script>Method: %s. Count: %d. Ignore these: ",
                     ctx_.method().c_str(), count++)));
         static const string s("</body></html>\n");
         slices_[0] =
@@ -127,10 +142,11 @@ class CallData final : public CallDataBase {
       }
       std::unique_ptr<char[]> chars(new char[kSize]);
       const size_t len = std::max(
-          0,
-          std::min(kSize - 1, snprintf(chars.get(), kSize, "% 8.3f s % 8.1f µs",
-                                       (publish_time_ - creation_time_) * 1e-9,
-                                       (Now() - publish_time_) * 1e-3)));
+          0, std::min(
+                 kSize - 1,
+                 snprintf(chars.get(), kSize, "% 8.3f s % 9.1f µs % 11.1f µs",
+                          (publish_time_ - creation_time_) * 1e-9,
+                          (Now() - publish_time_) * 1e-3, dead_delta_ * 1e-3)));
       slices_[1] =
           Slice(SliceFromCharArray(std::move(chars), len), Slice::STEAL_REF);
       if (count_ != 0) {
@@ -148,8 +164,9 @@ class CallData final : public CallDataBase {
   GenericServerContext ctx_;
   GenericServerAsyncReaderWriter stream_{&ctx_};
   Slice slices_[3];
-  int64_t publish_time_;
+  int64_t publish_time_ = 0;
   int64_t creation_time_ = 0;
+  int64_t dead_delta_ = 0;
   int count_ = 1;
 };
 
@@ -177,6 +194,15 @@ void Fan::Publish(std::unique_ptr<char[]> chars, size_t len) {
   for (auto* call : calls) {
     call->ProceedWithMessage(slice, now);
   }
+}
+
+void Publish(char c, int i, Fan* fan) {
+  static constexpr int kSize = 1024;
+  std::unique_ptr<char[]> chars(new char[kSize]);
+  const size_t len = snprintf(chars.get(), kSize, "data: ? % 10d % 6d ", i,
+                              static_cast<int>(fan->num_calls()));
+  chars[6] = c;
+  fan->Publish(std::move(chars), len);
 }
 
 }  // namespace sync_over_async
@@ -220,16 +246,13 @@ int main() {
   std::unique_ptr<ServerCompletionQueue> cq;
   if (kAsync) cq = builder.AddCompletionQueue();
   auto server = builder.BuildAndStart();
-  for (int i = 0; i < 1600; ++i) {
-    std::unique_ptr<char[]> chars(new char[8]);
-    memcpy(chars.get(), "data: \0 ", 8);
-    chars[6] = 'A' + (i & 31);
-    fan.Publish(std::move(chars), 8);
+  int i;
+  for (i = 0; i < 1600; ++i) {
+    sync_over_async::Publish('A' + (i & 31), i, &fan);
     std::this_thread::sleep_for(std::chrono::milliseconds(20));
   }
-  std::unique_ptr<char[]> chars(new char[8]);
-  memcpy(chars.get(), "data: - ", 8);
   fan.Shutdown();
-  fan.Publish(std::move(chars), 8);
+  sync_over_async::Publish('-', i, &fan);
+  // TODO: server->Shutdown(deadline);
   return 0;
 }
