@@ -253,6 +253,7 @@ int main() {
   }
   fan.Shutdown();
   sync_over_async::Publish('-', i, &fan);
-  // TODO: server->Shutdown(deadline);
+  GPR_ASSERT(fan.num_calls() == 0);
+  server->Shutdown(std::chrono::system_clock::now() + std::chrono::seconds(10));
   return 0;
 }
